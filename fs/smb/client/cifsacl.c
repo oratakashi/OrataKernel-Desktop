@@ -836,7 +836,7 @@ static void parse_dacl(struct smb_acl *pdacl, char *end_of_acl,
 	int i;
 	u16 num_aces = 0;
 	int acl_size;
-	char *acl_base;
+	char *acl_base, *end_of_dacl;
 	struct smb_ace **ppace;
 
 	/* BB need to add parm so we can store the SID BB */
@@ -860,6 +860,7 @@ static void parse_dacl(struct smb_acl *pdacl, char *end_of_acl,
 	   user/group/other have no permissions */
 	fattr->cf_mode &= ~(0777);
 
+	end_of_dacl = (char *)pdacl + le16_to_cpu(pdacl->size);
 	acl_base = (char *)pdacl;
 	acl_size = sizeof(struct smb_acl);
 
@@ -875,8 +876,7 @@ static void parse_dacl(struct smb_acl *pdacl, char *end_of_acl,
 			ppace[i] = (struct smb_ace *) (acl_base + acl_size);
 
 #ifdef CONFIG_CIFS_DEBUG2
-			dump_ace(ppace[i],
-				 (char *)pdacl + le16_to_cpu(pdacl->size));
+			dump_ace(ppace[i], end_of_dacl);
 #endif
 			if (mode_from_special_sid &&
 			    ppace[i]->sid.num_subauth >= 3 &&
