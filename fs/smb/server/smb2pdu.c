@@ -3019,6 +3019,7 @@ int smb2_open(struct ksmbd_work *work)
 			if (rc) {
 				ksmbd_put_durable_fd(dh_info.fp);
 				goto err_out2;
+			}
 
 			rc = ksmbd_reopen_durable_fd(work, dh_info.fp);
 			if (rc)
