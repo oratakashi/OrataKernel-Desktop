@@ -1,0 +1,218 @@
+name: Build Kernel
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build:
+    name: Build OrataKernel
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Determine next version increment
+        id: version
+        run: |
+          # Pattern: 7.1.0-rc1-OrataKernel-1.0.{increment}-zen
+          PREFIX="7.1.0-rc1-OrataKernel-1.0."
+          SUFFIX="-zen"
+
+          # Fetch all tags
+          git fetch --tags
+
+          # Find all matching tags and extract the increment number
+          LATEST=$(git tag --list "${PREFIX}*${SUFFIX}" \
+            | sed "s/^${PREFIX}//;s/${SUFFIX}$//" \
+            | grep -E '^[0-9]+$' \
+            | sort -n \
+            | tail -1)
+
+          if [ -z "$LATEST" ]; then
+            NEXT=0
+          else
+            NEXT=$(( LATEST + 1 ))
+          fi
+
+          VERSION="${PREFIX}${NEXT}${SUFFIX}"
+          echo "increment=${NEXT}" >> "$GITHUB_OUTPUT"
+          echo "tag=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "extraversion=-rc1-OrataKernel-1.0.${NEXT}-zen" >> "$GITHUB_OUTPUT"
+          echo "Next version tag: ${VERSION}"
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            build-essential bc bison flex libelf-dev libssl-dev \
+            libncurses-dev dwarves pahole cpio zip git \
+            gcc make perl python3
+
+      - name: Apply kernel config (Lenovo ThinkPad L13)
+        run: |
+          cp lenovo-thinkpad-l13-config .config
+          make ARCH=x86_64 olddefconfig
+
+      - name: Build kernel and modules
+        run: |
+          make ARCH=x86_64 -j$(nproc) bzImage modules
+
+      - name: Install modules to staging directory
+        run: |
+          mkdir -p staging/lib
+          make ARCH=x86_64 INSTALL_MOD_PATH=staging modules_install
+
+      - name: Collect artifacts and create zip
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          ZIPNAME="${TAG}.zip"
+
+          mkdir -p release_artifacts
+
+          # Kernel image
+          cp arch/x86/boot/bzImage "release_artifacts/bzImage-${TAG}"
+
+          # System.map
+          cp System.map "release_artifacts/System.map-${TAG}"
+
+          # Modules
+          cp -r staging/lib/modules release_artifacts/
+
+          # Create zip
+          cd release_artifacts
+          zip -r "../${ZIPNAME}" .
+          cd ..
+
+          echo "zip_name=${ZIPNAME}" >> "$GITHUB_ENV"
+          echo "zip_path=${ZIPNAME}" >> "$GITHUB_ENV"
+
+      - name: Configure git identity
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+      - name: Update Makefile EXTRAVERSION and create PR branch
+        id: pr_branch
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          EXTRAVERSION="${{ steps.version.outputs.extraversion }}"
+          BRANCH="automate/update-makefile-${TAG}"
+
+          git checkout -b "${BRANCH}"
+
+          # Update EXTRAVERSION in Makefile
+          sed -i "s/^EXTRAVERSION = .*/EXTRAVERSION = ${EXTRAVERSION}/" Makefile
+
+          # Update the config file header comment if present
+          sed -i "s/Linux\/x86 .* Kernel Configuration/Linux\/x86 7.1.0${EXTRAVERSION} Kernel Configuration/" lenovo-thinkpad-l13-config || true
+
+          git add Makefile lenovo-thinkpad-l13-config
+          git commit -m "chore: bump EXTRAVERSION to ${EXTRAVERSION}"
+          git push origin "${BRANCH}"
+
+          echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+
+      - name: Create tag
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          git tag "${TAG}"
+          git push origin "${TAG}"
+
+      - name: Create GitHub Release and upload artifact
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const tag = '${{ steps.version.outputs.tag }}';
+            const zipName = process.env.zip_name;
+            const zipPath = process.env.zip_path;
+
+            // Create release
+            const { data: release } = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tag,
+              name: tag,
+              body: [
+                `## OrataKernel Build`,
+                ``,
+                `**Version:** \`${tag}\``,
+                ``,
+                `### Artifacts`,
+                `- \`bzImage-${tag}\` — kernel image`,
+                `- \`System.map-${tag}\` — symbol map`,
+                `- \`modules/\` — kernel modules`,
+                ``,
+                `All artifacts are bundled in the attached zip file.`,
+              ].join('\n'),
+              draft: false,
+              prerelease: false,
+            });
+
+            // Upload zip artifact
+            const zipData = fs.readFileSync(zipPath);
+            await github.rest.repos.uploadReleaseAsset({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: release.id,
+              name: zipName,
+              data: zipData,
+            });
+
+            core.info(`Release created: ${release.html_url}`);
+
+      - name: Create Pull Request to master
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const tag = '${{ steps.version.outputs.tag }}';
+            const branch = '${{ steps.pr_branch.outputs.branch }}';
+
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:${branch}`,
+              base: 'master',
+              state: 'open',
+            });
+
+            if (prs.length > 0) {
+              core.info(`Pull request already exists: ${prs[0].html_url}`);
+              return;
+            }
+
+            const { data: pr } = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `chore: bump EXTRAVERSION to ${tag}`,
+              head: branch,
+              base: 'master',
+              body: [
+                '## Makefile Version Bump',
+                '',
+                `This pull request was created automatically by the **Build Kernel** workflow.`,
+                '',
+                `| Field | Value |`,
+                `|-------|-------|`,
+                `| New version | \`${tag}\` |`,
+                `| Branch | \`${branch}\` |`,
+                `| Date | ${new Date().toUTCString()} |`,
+              ].join('\n'),
+            });
+
+            core.info(`Pull request created: ${pr.html_url}`);
