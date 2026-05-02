@@ -31,6 +31,11 @@ jobs:
           git remote add upstream https://github.com/torvalds/linux.git
           git fetch upstream master
 
+      - name: Configure git identity
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
       - name: Create automate branch and merge upstream
         run: |
           git checkout -b "${{ steps.branch.outputs.name }}"
