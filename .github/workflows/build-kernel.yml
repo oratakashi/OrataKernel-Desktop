@@ -98,7 +98,7 @@ jobs:
       # ─── Generate initramfs ──────────────────────────────────────────
       - name: Generate initramfs
         run: |
-          FULL_VER="${{ steps.version.outputs.full_version }}"
+          FULL_VER="${{ steps.version.outputs.full_version }}+"
           STAGING="$(pwd)/staging"
 
           # Install modules ke sistem sementara agar dracut bisa detect
@@ -113,7 +113,7 @@ jobs:
       # ─── Install Script ─────────────────────────────────────────────
       - name: Generate install.sh
         run: |
-          FULL_VER="${{ steps.version.outputs.full_version }}"
+          FULL_VER="${{ steps.version.outputs.full_version }}+"
           TAG="${{ steps.version.outputs.tag }}"
 
           cat > staging/install.sh << 'INSTALL_EOF'
@@ -267,7 +267,7 @@ jobs:
           script: |
             const fs = require('fs');
             const tag     = '${{ steps.version.outputs.tag }}';
-            const fullVer = '${{ steps.version.outputs.full_version }}';
+            const fullVer = '${{ steps.version.outputs.full_version }}+';
             const zipName = process.env.zip_name;
             const zipPath = process.env.zip_path;
 
