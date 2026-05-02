@@ -22,87 +22,222 @@ jobs:
           ref: master
           fetch-depth: 0
 
+      # ─── Versioning ────────────────────────────────────────────────
       - name: Determine next version increment
         id: version
         run: |
-          # Pattern: 7.1.0-rc1-OrataKernel-1.0.{increment}-zen
           PREFIX="7.1.0-rc1-OrataKernel-1.0."
           SUFFIX="-zen"
-
-          # Fetch all tags
           git fetch --tags
 
-          # Find all matching tags and extract the increment number
           LATEST=$(git tag --list "${PREFIX}*${SUFFIX}" \
             | sed "s/^${PREFIX}//;s/${SUFFIX}$//" \
             | grep -E '^[0-9]+$' \
             | sort -n \
             | tail -1)
 
-          if [ -z "$LATEST" ]; then
-            NEXT=0
-          else
-            NEXT=$(( LATEST + 1 ))
-          fi
-
+          NEXT=$([ -z "$LATEST" ] && echo 0 || echo $(( LATEST + 1 )))
           VERSION="${PREFIX}${NEXT}${SUFFIX}"
-          echo "increment=${NEXT}" >> "$GITHUB_OUTPUT"
-          echo "tag=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "extraversion=-rc1-OrataKernel-1.0.${NEXT}-zen" >> "$GITHUB_OUTPUT"
-          echo "Next version tag: ${VERSION}"
+          EXTRAVERSION="-rc1-OrataKernel-1.0.${NEXT}-zen"
+          FULL_VERSION="7.1.0${EXTRAVERSION}"
 
+          echo "increment=${NEXT}"            >> "$GITHUB_OUTPUT"
+          echo "tag=${VERSION}"               >> "$GITHUB_OUTPUT"
+          echo "extraversion=${EXTRAVERSION}" >> "$GITHUB_OUTPUT"
+          echo "full_version=${FULL_VERSION}" >> "$GITHUB_OUTPUT"
+
+      # ─── Dependencies ───────────────────────────────────────────────
       - name: Install build dependencies
         run: |
           sudo apt-get update -y
           sudo apt-get install -y \
-            build-essential bc bison flex libelf-dev libssl-dev \
-            libncurses-dev dwarves pahole cpio zip git \
-            gcc make perl python3
+            build-essential bc bison flex \
+            libelf-dev libssl-dev libncurses-dev \
+            dwarves pahole cpio zip git \
+            gcc make perl python3 \
+            dracut kmod grub2-common
 
-      - name: Apply kernel config (Lenovo ThinkPad L13)
+      # ─── Kernel Config ──────────────────────────────────────────────
+      - name: Apply kernel config
         run: |
           cp lenovo-thinkpad-l13-config .config
           make ARCH=x86_64 olddefconfig
 
-      - name: Build kernel and modules
+      # ─── Build ──────────────────────────────────────────────────────
+      - name: Build kernel, bzImage, and modules
         run: |
-          make ARCH=x86_64 -j$(nproc) vmlinux modules
+          make ARCH=x86_64 -j$(nproc) bzImage modules
 
-      - name: Install modules to staging directory
+      # ─── Staging: Struktur seperti filesystem nyata ──────────────────
+      - name: Install to staging directory
         run: |
-          mkdir -p staging/lib
-          make ARCH=x86_64 INSTALL_MOD_PATH=staging modules_install
+          FULL_VER="${{ steps.version.outputs.full_version }}"
+          STAGING="$(pwd)/staging"
 
-      - name: Collect artifacts and create zip
+          mkdir -p "${STAGING}/boot"
+          mkdir -p "${STAGING}/lib/modules"
+
+          # bzImage → ini yang di-load bootloader
+          cp arch/x86/boot/bzImage "${STAGING}/boot/vmlinuz-${FULL_VER}"
+
+          # vmlinux → uncompressed, untuk debugging/symbol
+          cp vmlinux "${STAGING}/boot/vmlinux-${FULL_VER}"
+
+          # System.map → untuk kernel symbol resolution
+          cp System.map "${STAGING}/boot/System.map-${FULL_VER}"
+
+          # .config → tersimpan di /boot
+          cp .config "${STAGING}/boot/config-${FULL_VER}"
+
+          # Modules → /lib/modules/{version}/, strip debug symbols
+          make ARCH=x86_64 \
+            INSTALL_MOD_PATH="${STAGING}" \
+            INSTALL_MOD_STRIP=1 \
+            modules_install
+
+      # ─── Generate initramfs ──────────────────────────────────────────
+      - name: Generate initramfs
+        run: |
+          FULL_VER="${{ steps.version.outputs.full_version }}"
+          STAGING="$(pwd)/staging"
+
+          # Install modules ke sistem sementara agar dracut bisa detect
+          sudo cp -r "${STAGING}/lib/modules" /lib/
+
+          sudo dracut \
+            --force \
+            --kver "${FULL_VER}" \
+            --modules "base rootfs-block kernel-modules" \
+            "${STAGING}/boot/initramfs-${FULL_VER}.img"
+
+      # ─── Install Script ─────────────────────────────────────────────
+      - name: Generate install.sh
+        run: |
+          FULL_VER="${{ steps.version.outputs.full_version }}"
+          TAG="${{ steps.version.outputs.tag }}"
+
+          cat > staging/install.sh << 'INSTALL_EOF'
+          #!/usr/bin/env bash
+          # ============================================================
+          # OrataKernel Installer
+          # Target: Lenovo ThinkPad L13
+          # Usage: sudo bash install.sh
+          # ============================================================
+          set -euo pipefail
+
+          # ── Safety checks ──────────────────────────────────────────
+          if [[ $EUID -ne 0 ]]; then
+            echo "❌ Harus dijalankan sebagai root: sudo bash install.sh"
+            exit 1
+          fi
+
+          SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+          FULL_VER="PLACEHOLDER_VERSION"
+          BOOT_DIR="/boot"
+          MOD_DIR="/lib/modules"
+
+          echo "╔══════════════════════════════════════════╗"
+          echo "║     OrataKernel Installer                ║"
+          echo "║     Version: ${FULL_VER}  ║"
+          echo "╚══════════════════════════════════════════╝"
+          echo ""
+
+          # ── Backup kernel lama ──────────────────────────────────────
+          BACKUP_DIR="/boot/orata-backup-$(date +%Y%m%d_%H%M%S)"
+          mkdir -p "${BACKUP_DIR}"
+          echo "📦 Backup kernel existing ke ${BACKUP_DIR}..."
+          cp /boot/vmlinuz-* "${BACKUP_DIR}/" 2>/dev/null || true
+          cp /boot/initramfs-* "${BACKUP_DIR}/" 2>/dev/null || true
+          cp /boot/System.map-* "${BACKUP_DIR}/" 2>/dev/null || true
+
+          # ── Copy boot artifacts ─────────────────────────────────────
+          echo "📥 Installing kernel image..."
+          cp "${SCRIPT_DIR}/boot/vmlinuz-${FULL_VER}"       "${BOOT_DIR}/"
+          cp "${SCRIPT_DIR}/boot/vmlinux-${FULL_VER}"       "${BOOT_DIR}/"
+          cp "${SCRIPT_DIR}/boot/System.map-${FULL_VER}"    "${BOOT_DIR}/"
+          cp "${SCRIPT_DIR}/boot/config-${FULL_VER}"        "${BOOT_DIR}/"
+          cp "${SCRIPT_DIR}/boot/initramfs-${FULL_VER}.img" "${BOOT_DIR}/"
+
+          # ── Install modules ─────────────────────────────────────────
+          echo "🔧 Installing kernel modules..."
+          cp -r "${SCRIPT_DIR}/lib/modules/${FULL_VER}" "${MOD_DIR}/"
+
+          # Jalankan depmod untuk rebuild module dependency map
+          depmod -a "${FULL_VER}"
+
+          # ── Update bootloader ───────────────────────────────────────
+          echo "🔄 Updating bootloader..."
+
+          # Deteksi bootloader: systemd-boot atau GRUB
+          if [[ -d /boot/efi/EFI/systemd || -d /boot/loader/entries ]]; then
+            echo "  → Detected: systemd-boot"
+            ENTRY_DIR="/boot/loader/entries"
+            mkdir -p "${ENTRY_DIR}"
+
+            ROOT_UUID=$(findmnt -n -o UUID /)
+
+            cat > "${ENTRY_DIR}/orata-${FULL_VER}.conf" << EOF
+          title   OrataKernel ${FULL_VER}
+          linux   /vmlinuz-${FULL_VER}
+          initrd  /initramfs-${FULL_VER}.img
+          options root=UUID=${ROOT_UUID} rw quiet loglevel=3
+          EOF
+            echo "  ✅ systemd-boot entry created"
+
+          elif command -v grub-mkconfig &>/dev/null || command -v grub2-mkconfig &>/dev/null; then
+            echo "  → Detected: GRUB"
+            GRUB_CFG=""
+            for path in /boot/grub/grub.cfg /boot/grub2/grub.cfg /boot/efi/EFI/fedora/grub.cfg; do
+              [[ -f "$path" ]] && GRUB_CFG="$path" && break
+            done
+
+            if [[ -n "${GRUB_CFG}" ]]; then
+              GRUB_CMD=$(command -v grub2-mkconfig || command -v grub-mkconfig)
+              "${GRUB_CMD}" -o "${GRUB_CFG}"
+              echo "  ✅ GRUB config updated: ${GRUB_CFG}"
+            else
+              echo "  ⚠️  GRUB config tidak ditemukan, update manual diperlukan"
+            fi
+          else
+            echo "  ⚠️  Bootloader tidak terdeteksi otomatis"
+            echo "      Tambahkan boot entry secara manual untuk:"
+            echo "      kernel:    ${BOOT_DIR}/vmlinuz-${FULL_VER}"
+            echo "      initramfs: ${BOOT_DIR}/initramfs-${FULL_VER}.img"
+          fi
+
+          echo ""
+          echo "✅ OrataKernel ${FULL_VER} berhasil di-install!"
+          echo "🔁 Silakan reboot untuk menggunakan kernel baru."
+          echo ""
+          echo "   Untuk rollback jika bermasalah:"
+          echo "   Saat boot → pilih kernel lama di bootloader menu"
+          echo "   Backup tersimpan di: ${BACKUP_DIR}"
+          INSTALL_EOF
+
+          # Replace placeholder dengan versi aktual
+          sed -i "s/PLACEHOLDER_VERSION/${FULL_VER}/g" staging/install.sh
+          chmod +x staging/install.sh
+
+      # ─── Package ────────────────────────────────────────────────────
+      - name: Package release artifacts
         run: |
           TAG="${{ steps.version.outputs.tag }}"
           ZIPNAME="${TAG}.zip"
 
-          mkdir -p release_artifacts
-
-          # Kernel image (uncompressed)
-          cp vmlinux "release_artifacts/vmlinux-${TAG}"
-
-          # System.map
-          cp System.map "release_artifacts/System.map-${TAG}"
-
-          # Modules
-          cp -r staging/lib/modules release_artifacts/
-
-          # Create zip
-          cd release_artifacts
+          cd staging
           zip -r "../${ZIPNAME}" .
           cd ..
 
           echo "zip_name=${ZIPNAME}" >> "$GITHUB_ENV"
-          echo "zip_path=${ZIPNAME}" >> "$GITHUB_ENV"
+          echo "zip_path=${ZIPNAME}"  >> "$GITHUB_ENV"
 
+      # ─── Git & PR ────────────────────────────────────────────────────
       - name: Configure git identity
         run: |
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
 
-      - name: Update Makefile EXTRAVERSION and create PR branch
+      - name: Bump EXTRAVERSION and create PR branch
         id: pr_branch
         run: |
           TAG="${{ steps.version.outputs.tag }}"
@@ -110,60 +245,74 @@ jobs:
           BRANCH="automate/update-makefile-${TAG}"
 
           git checkout -b "${BRANCH}"
-
-          # Update EXTRAVERSION in Makefile
           sed -i "s/^EXTRAVERSION = .*/EXTRAVERSION = ${EXTRAVERSION}/" Makefile
-
-          # Update the config file header comment if present
-          sed -i "s/Linux\/x86 .* Kernel Configuration/Linux\/x86 7.1.0${EXTRAVERSION} Kernel Configuration/" lenovo-thinkpad-l13-config || true
+          sed -i "s/Linux\/x86 .* Kernel Configuration/Linux\/x86 7.1.0${EXTRAVERSION} Kernel Configuration/" \
+            lenovo-thinkpad-l13-config || true
 
           git add Makefile lenovo-thinkpad-l13-config
           git commit -m "chore: bump EXTRAVERSION to ${EXTRAVERSION}"
           git push origin "${BRANCH}"
-
           echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
 
       - name: Create tag
         run: |
-          TAG="${{ steps.version.outputs.tag }}"
-          git tag "${TAG}"
-          git push origin "${TAG}"
+          git tag "${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
 
-      - name: Create GitHub Release and upload artifact
+      # ─── Release ─────────────────────────────────────────────────────
+      - name: Create GitHub Release
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const path = require('path');
-
-            const tag = '${{ steps.version.outputs.tag }}';
+            const tag     = '${{ steps.version.outputs.tag }}';
+            const fullVer = '${{ steps.version.outputs.full_version }}';
             const zipName = process.env.zip_name;
             const zipPath = process.env.zip_path;
 
-            // Create release
             const { data: release } = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: tag,
-              name: tag,
+              name: `OrataKernel ${tag}`,
               body: [
-                `## OrataKernel Build`,
-                ``,
+                '## OrataKernel Build',
+                '',
                 `**Version:** \`${tag}\``,
-                ``,
-                `### Artifacts`,
-                `- \`vmlinux-${tag}\` — kernel image (uncompressed)`,
-                `- \`System.map-${tag}\` — symbol map`,
-                `- \`modules/\` — kernel modules`,
-                ``,
-                `All artifacts are bundled in the attached zip file.`,
+                `**Target Device:** Lenovo ThinkPad L13`,
+                '',
+                '## 📦 Isi Paket',
+                '| File | Keterangan |',
+                '|------|-----------|',
+                `| \`boot/vmlinuz-${fullVer}\` | Kernel image (bzImage, bootable) |`,
+                `| \`boot/vmlinux-${fullVer}\` | Kernel image (uncompressed, untuk debugging) |`,
+                `| \`boot/initramfs-${fullVer}.img\` | Initial RAM filesystem |`,
+                `| \`boot/System.map-${fullVer}\` | Kernel symbol map |`,
+                `| \`boot/config-${fullVer}\` | Kernel config yang digunakan |`,
+                `| \`lib/modules/${fullVer}/\` | Kernel modules |`,
+                `| \`install.sh\` | Installer script |`,
+                '',
+                '## 🚀 Cara Install',
+                '```bash',
+                `# 1. Download dan extract: ${zipName}`,
+                'unzip ' + zipName,
+                '',
+                '# 2. Jalankan installer (butuh root)',
+                'sudo bash install.sh',
+                '',
+                '# 3. Reboot',
+                'sudo reboot',
+                '```',
+                '',
+                '## 🔄 Rollback',
+                'Jika terjadi masalah, pilih kernel lama dari bootloader menu saat boot.',
+                'Backup otomatis tersimpan di `/boot/orata-backup-{timestamp}/`',
               ].join('\n'),
               draft: false,
-              prerelease: false,
+              prerelease: true,
             });
 
-            // Upload zip artifact
             const zipData = fs.readFileSync(zipPath);
             await github.rest.repos.uploadReleaseAsset({
               owner: context.repo.owner,
@@ -173,14 +322,14 @@ jobs:
               data: zipData,
             });
 
-            core.info(`Release created: ${release.html_url}`);
+            core.info(`Release: ${release.html_url}`);
 
-      - name: Create Pull Request to master
+      - name: Create Pull Request
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const tag = '${{ steps.version.outputs.tag }}';
+            const tag    = '${{ steps.version.outputs.tag }}';
             const branch = '${{ steps.pr_branch.outputs.branch }}';
 
             const { data: prs } = await github.rest.pulls.list({
@@ -190,9 +339,8 @@ jobs:
               base: 'master',
               state: 'open',
             });
-
             if (prs.length > 0) {
-              core.info(`Pull request already exists: ${prs[0].html_url}`);
+              core.info(`PR already exists: ${prs[0].html_url}`);
               return;
             }
 
@@ -205,14 +353,13 @@ jobs:
               body: [
                 '## Makefile Version Bump',
                 '',
-                `This pull request was created automatically by the **Build Kernel** workflow.`,
+                'Auto-generated oleh Build Kernel workflow.',
                 '',
                 `| Field | Value |`,
                 `|-------|-------|`,
-                `| New version | \`${tag}\` |`,
-                `| Branch | \`${branch}\` |`,
-                `| Date | ${new Date().toUTCString()} |`,
+                `| Version | \`${tag}\` |`,
+                `| Branch  | \`${branch}\` |`,
+                `| Date    | ${new Date().toUTCString()} |`,
               ].join('\n'),
             });
-
-            core.info(`Pull request created: ${pr.html_url}`);
+            core.info(`PR: ${pr.html_url}`);
