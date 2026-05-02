@@ -4,8 +4,65 @@ Linux kernel
 The Linux kernel is the core of any Linux operating system. It manages hardware,
 system resources, and provides the fundamental services for all other software.
 
-Quick Start
+# Quick Start
 -----------
+
+## Setup Enviroment
+
+- Install Dependency
+    ```bash
+    sudo dnf install -y \
+        gcc gcc-c++ make \
+        ncurses-devel \
+        elfutils-libelf-devel \
+        openssl-devel \
+        flex bison \
+        perl \
+        bc \
+        dwarves \
+        rpm-build \
+        git \
+        wget \
+        xz
+  ```
+- Clone Repository
+    ```bash
+    git clone git@github.com:oratakashi/OrataKernel-Desktop.git
+    ```
+- Copy config kernel from current running system
+    ```bash
+    cp /boot/config-$(uname -r) .config
+    ```
+- Update Config for latest kernel version
+    ```bash
+    make olddefconfig
+    ```
+- Customize Configuration for your device
+    ```bash
+    make menuconfig
+    ```
+- Compile Kernel
+    ```bash
+    make -j$(nproc)
+    ```
+- Install Kernel module
+    ```bash
+    sudo make modules_install
+    ```
+- Install Kernel into /boot
+    ```bash
+    sudo make install
+    ```
+- Update GRUB 
+    ```bash
+    sudo grub2-mkconfig -o /boot/grub2/grub.cfg
+    ```
+- Reboot system
+    ```bash
+    reboot
+    ```
+
+## Upstream Link Reference
 
 * Report a bug: See Documentation/admin-guide/reporting-issues.rst
 * Get the latest kernel: https://kernel.org
