@@ -420,6 +420,13 @@ jobs:
 
       # ─── Package ───────────────────────────────────────────────────
       # Zip dinamai sesuai kernel release — konsisten dengan nama file di /boot.
+      #
+      # PENTING: modules_install membuat dua symlink di lib/modules/{KR}/:
+      #   - build  → menunjuk ke kernel source tree (pwd)
+      #   - source → menunjuk ke kernel source tree (pwd)
+      # Jika zip -r mengikuti symlink ini, ia akan masuk ke source tree
+      # yang di dalamnya ada lagi staging/ → infinite loop → path absurd.
+      # Fix: hapus kedua symlink sebelum zip. Tidak dibutuhkan di release.
       - name: Package release artifacts
         id: package
         run: |
@@ -427,19 +434,46 @@ jobs:
           TAG="${{ steps.version.outputs.tag }}"
           ZIPNAME="${TAG}.zip"
           ZIPPATH="$(pwd)/${ZIPNAME}"
+          STAGING="$(pwd)/staging"
 
-          # Remove build/source symlinks created by make modules_install.
-          # They point back to the kernel source tree and cause zip to recurse infinitely.
-          find staging/lib/modules -maxdepth 2 -type l \( -name "build" -o -name "source" \) -delete
+          # ── Hapus symlink yang menyebabkan infinite loop ──────────────
+          # `build` dan `source` adalah symlink ke kernel source tree,
+          # tidak dibutuhkan di release package (hanya untuk out-of-tree modules dev).
+          MOD_DIR="${STAGING}/lib/modules/${KR}"
+          for symlink in build source; do
+            TARGET="${MOD_DIR}/${symlink}"
+            if [[ -L "${TARGET}" ]]; then
+              rm -f "${TARGET}"
+              echo "🔗 Removed symlink: lib/modules/${KR}/${symlink}"
+            fi
+          done
 
-          cd staging
-          zip -r "${ZIPPATH}" . --exclude "*.DS_Store"
+          # ── Verifikasi tidak ada symlink tersisa yang menunjuk ke luar staging ──
+          DANGLING=$(find "${STAGING}" -type l | while read -r link; do
+            dest=$(readlink -f "${link}" 2>/dev/null || true)
+            if [[ -n "${dest}" ]] && [[ "${dest}" != "${STAGING}"* ]]; then
+              echo "  ⚠️  ${link} → ${dest}"
+            fi
+          done)
+          if [[ -n "${DANGLING}" ]]; then
+            echo "⚠️  Symlink menunjuk ke luar staging ditemukan, akan di-skip zip:"
+            echo "${DANGLING}"
+          fi
+
+          # ── Zip dengan -y: simpan symlink sebagai symlink, bukan follow ──
+          # Double safety: -y flag membuat zip menyimpan symlink sebagai symlink
+          # (bukan mengikutinya), sehingga bahkan jika ada symlink lain yang lolos
+          # di atas, zip tidak akan infinite loop.
+          cd "${STAGING}"
+          zip -r -y "${ZIPPATH}" . --exclude "*.DS_Store"
           cd ..
 
           echo "zip_name=${ZIPNAME}" >> "$GITHUB_OUTPUT"
           echo "zip_path=${ZIPPATH}" >> "$GITHUB_OUTPUT"
 
           echo "✅ Package: ${ZIPNAME} ($(du -sh "${ZIPPATH}" | cut -f1))"
+          echo "📋 Isi zip:"
+          zipinfo -1 "${ZIPPATH}" | sort | head -50
 
       # ─── Dry run exit ───────────────────────────────────────────────
       - name: "[Dry Run] Skip release & PR"
