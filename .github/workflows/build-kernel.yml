@@ -428,6 +428,10 @@ jobs:
           ZIPNAME="${TAG}.zip"
           ZIPPATH="$(pwd)/${ZIPNAME}"
 
+          # Remove build/source symlinks created by make modules_install.
+          # They point back to the kernel source tree and cause zip to recurse infinitely.
+          find staging/lib/modules -maxdepth 2 -type l \( -name "build" -o -name "source" \) -delete
+
           cd staging
           zip -r "${ZIPPATH}" . --exclude "*.DS_Store"
           cd ..
