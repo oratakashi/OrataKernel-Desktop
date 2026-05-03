@@ -2018,22 +2018,10 @@ mlx5e_skb_from_cqe_mpwrq_nonlinear(struct mlx5e_rq *rq, struct mlx5e_mpw_info *w
 			return NULL; /* page/packet was consumed by XDP */
 		}
 
-<<<<<<< HEAD
 		new_nr_frags = sinfo->nr_frags;
 		nr_frags_free = old_nr_frags - new_nr_frags;
 		if (unlikely(nr_frags_free))
 			truesize -= (nr_frags_free - 1) * page_size +
-||||||| 05f7e89ab9731
-		nr_frags_free = old_nr_frags - sinfo->nr_frags;
-		if (unlikely(nr_frags_free)) {
-			frag_page -= nr_frags_free;
-			truesize -= (nr_frags_free - 1) * PAGE_SIZE +
-=======
-		new_nr_frags = sinfo->nr_frags;
-		nr_frags_free = old_nr_frags - new_nr_frags;
-		if (unlikely(nr_frags_free))
-			truesize -= (nr_frags_free - 1) * PAGE_SIZE +
->>>>>>> hardened/6.19
 				ALIGN(pg_consumed_bytes,
 				      BIT(rq->mpwqe.log_stride_sz));
 

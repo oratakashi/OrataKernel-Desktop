@@ -263,15 +263,9 @@ void cifs_close_deferred_file(struct cifsInodeInfo *cifs_inode);
 
 void cifs_close_all_deferred_files(struct cifs_tcon *tcon);
 
-<<<<<<< HEAD
 void cifs_close_all_deferred_files_sb(struct cifs_sb_info *cifs_sb);
 void cifs_close_deferred_file_under_dentry(struct cifs_tcon *tcon,
-||||||| 05f7e89ab9731
 void cifs_close_deferred_file_under_dentry(struct cifs_tcon *cifs_tcon,
-=======
-void cifs_close_all_deferred_files_sb(struct cifs_sb_info *cifs_sb);
-void cifs_close_deferred_file_under_dentry(struct cifs_tcon *cifs_tcon,
->>>>>>> hardened/6.19
 					   struct dentry *dentry);
 
 void cifs_mark_open_handles_for_deleted_file(struct inode *inode,

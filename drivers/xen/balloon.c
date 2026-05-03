@@ -724,13 +724,8 @@ static int __init balloon_add_regions(void)
 static int __init balloon_init(void)
 {
 	struct task_struct *task;
-<<<<<<< HEAD
 	long current_pages = 0;
 	domid_t domid = DOMID_SELF;
-||||||| 05f7e89ab9731
-=======
-	unsigned long current_pages;
->>>>>>> hardened/6.19
 	int rc;
 
 	if (!xen_domain())
@@ -738,7 +733,6 @@ static int __init balloon_init(void)
 
 	pr_info("Initialising balloon driver\n");
 
-<<<<<<< HEAD
 	if (xen_initial_domain())
 		current_pages = HYPERVISOR_memory_op(XENMEM_current_reservation,
 		                                     &domid);
@@ -754,21 +748,6 @@ static int __init balloon_init(void)
 			current_pages = get_num_physpages() -
 			                xen_unpopulated_pages;
 		}
-||||||| 05f7e89ab9731
-	if (xen_released_pages >= get_num_physpages()) {
-		WARN(1, "Released pages underflow current target");
-		return -ERANGE;
-=======
-	if (xen_pv_domain()) {
-		if (xen_released_pages >= xen_start_info->nr_pages)
-			goto underflow;
-		current_pages = min(xen_start_info->nr_pages -
-		                    xen_released_pages, max_pfn);
-	} else {
-		if (xen_unpopulated_pages >= get_num_physpages())
-			goto underflow;
-		current_pages = get_num_physpages() - xen_unpopulated_pages;
->>>>>>> hardened/6.19
 	}
 
 	balloon_stats.current_pages = current_pages;

@@ -309,7 +309,6 @@ static int tdx_report_new_locked(struct tsm_report *report, void *data)
 		return ret;
 	}
 
-<<<<<<< HEAD
 	if (quote_buf->status != GET_QUOTE_SUCCESS) {
 		pr_debug("GetQuote request failed, status:%llx\n", quote_buf->status);
 		return -EIO;
@@ -321,16 +320,6 @@ static int tdx_report_new_locked(struct tsm_report *report, void *data)
 		return -EFBIG;
 
 	buf = kvmemdup(quote_buf->data, out_len, GFP_KERNEL);
-||||||| 05f7e89ab9731
-	buf = kvmemdup(quote_buf->data, quote_buf->out_len, GFP_KERNEL);
-=======
-	out_len = READ_ONCE(quote_buf->out_len);
-
-	if (out_len > TDX_QUOTE_MAX_LEN)
-		return -EFBIG;
-
-	buf = kvmemdup(quote_buf->data, out_len, GFP_KERNEL);
->>>>>>> hardened/6.19
 	if (!buf)
 		return -ENOMEM;
 

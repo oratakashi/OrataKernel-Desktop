@@ -171,57 +171,27 @@ static int io_uring_cmd_getsockname(struct socket *sock,
 int io_uring_cmd_sock(struct io_uring_cmd *cmd, unsigned int issue_flags)
 {
 	struct socket *sock = cmd->file->private_data;
-<<<<<<< HEAD
 
-||||||| 05f7e89ab9731
 	struct sock *sk = sock->sk;
 	struct proto *prot = READ_ONCE(sk->sk_prot);
 	int ret, arg = 0;
-
-	if (!prot || !prot->ioctl)
-		return -EOPNOTSUPP;
-
-=======
-	struct sock *sk = sock->sk;
-	struct proto *prot = READ_ONCE(sk->sk_prot);
-	int ret, arg = 0;
-
->>>>>>> hardened/6.19
 	switch (cmd->cmd_op) {
 	case SOCKET_URING_OP_SIOCINQ:
-<<<<<<< HEAD
 		return io_uring_cmd_get_sock_ioctl(sock, SIOCINQ);
-||||||| 05f7e89ab9731
-		ret = prot->ioctl(sk, SIOCINQ, &arg);
-		if (ret)
-			return ret;
-		return arg;
-=======
 		if (!prot || !prot->ioctl)
 			return -EOPNOTSUPP;
-
 		ret = prot->ioctl(sk, SIOCINQ, &arg);
 		if (ret)
 			return ret;
 		return arg;
->>>>>>> hardened/6.19
 	case SOCKET_URING_OP_SIOCOUTQ:
-<<<<<<< HEAD
 		return io_uring_cmd_get_sock_ioctl(sock, SIOCOUTQ);
-||||||| 05f7e89ab9731
-		ret = prot->ioctl(sk, SIOCOUTQ, &arg);
-		if (ret)
-			return ret;
-		return arg;
-=======
 		if (!prot || !prot->ioctl)
 			return -EOPNOTSUPP;
-
 		ret = prot->ioctl(sk, SIOCOUTQ, &arg);
 		if (ret)
 			return ret;
 		return arg;
->>>>>>> hardened/6.19
 	case SOCKET_URING_OP_GETSOCKOPT:
 		return io_uring_cmd_getsockopt(sock, cmd, issue_flags);
 	case SOCKET_URING_OP_SETSOCKOPT:

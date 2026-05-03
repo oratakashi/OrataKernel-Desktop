@@ -159,16 +159,6 @@ int __io_uring_add_tctx_node(struct io_ring_ctx *ctx)
 				goto err_free;
 		}
 	}
-<<<<<<< HEAD
-||||||| 05f7e89ab9731
-	if (!xa_load(&tctx->xa, (unsigned long)ctx)) {
-		node = kmalloc(sizeof(*node), GFP_KERNEL);
-		if (!node)
-			return -ENOMEM;
-		node->ctx = ctx;
-		node->task = current;
-=======
-
 	/*
 	 * Re-activate io-wq keepalive on any new io_uring usage. The wq may have
 	 * been marked for idle-exit when the task temporarily had no active
@@ -182,7 +172,6 @@ int __io_uring_add_tctx_node(struct io_ring_ctx *ctx)
 			return -ENOMEM;
 		node->ctx = ctx;
 		node->task = current;
->>>>>>> hardened/6.19
 
 	/*
 	 * Re-activate io-wq keepalive on any new io_uring usage. The wq may have

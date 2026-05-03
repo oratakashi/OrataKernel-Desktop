@@ -329,16 +329,9 @@ int hfsplus_file_fsync(struct file *file, loff_t start, loff_t end,
 	struct hfsplus_vh *vhdr = sbi->s_vhdr;
 	int error = 0, error2;
 
-<<<<<<< HEAD
 	hfs_dbg("inode->i_ino %llu, start %llu, end %llu\n",
 		inode->i_ino, start, end);
 
-||||||| 05f7e89ab9731
-=======
-	hfs_dbg("inode->i_ino %lu, start %llu, end %llu\n",
-		inode->i_ino, start, end);
-
->>>>>>> hardened/6.19
 	error = file_write_and_wait_range(file, start, end);
 	if (error)
 		return error;
@@ -657,14 +650,8 @@ int hfsplus_cat_write_inode(struct inode *inode)
 	hfsplus_cat_entry entry;
 	int res = 0;
 
-<<<<<<< HEAD
 	hfs_dbg("inode->i_ino %llu\n", inode->i_ino);
 
-||||||| 05f7e89ab9731
-=======
-	hfs_dbg("inode->i_ino %lu\n", inode->i_ino);
-
->>>>>>> hardened/6.19
 	if (HFSPLUS_IS_RSRC(inode))
 		main_inode = HFSPLUS_I(inode)->rsrc_inode;
 
@@ -745,20 +732,7 @@ int hfsplus_cat_write_inode(struct inode *inode)
 	set_bit(HFSPLUS_I_CAT_DIRTY, &HFSPLUS_I(inode)->flags);
 out:
 	hfs_find_exit(&fd);
-<<<<<<< HEAD
 
-||||||| 05f7e89ab9731
-=======
-
-	if (!res) {
-		res = hfs_btree_write(tree);
-		if (res) {
-			pr_err("b-tree write err: %d, ino %lu\n",
-			       res, inode->i_ino);
-		}
-	}
-
->>>>>>> hardened/6.19
 	return res;
 }
 

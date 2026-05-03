@@ -1699,7 +1699,6 @@ static int btrfs_load_block_group_raid10(struct btrfs_block_group *bg,
 		return -EINVAL;
 	}
 
-<<<<<<< HEAD
 	raid0_allocs = kzalloc_objs(*raid0_allocs, map->num_stripes / map->sub_stripes, GFP_NOFS);
 	if (!raid0_allocs)
 		return -ENOMEM;
@@ -1753,63 +1752,6 @@ static int btrfs_load_block_group_raid10(struct btrfs_block_group *bg,
 	stripe_nr = 0;
 	stripe_offset = 0;
 
-||||||| 05f7e89ab9731
-=======
-	raid0_allocs = kcalloc(map->num_stripes / map->sub_stripes, sizeof(*raid0_allocs),
-			       GFP_NOFS);
-	if (!raid0_allocs)
-		return -ENOMEM;
-
-	/*
-	 * When the last extent is removed, last_alloc can be smaller than the other write
-	 * pointer. In that case, last_alloc should be moved to the corresponding write
-	 * pointer position.
-	 */
-	for (int i = 0; i < map->num_stripes; i += map->sub_stripes) {
-		u64 alloc = zone_info[i].alloc_offset;
-
-		for (int j = 1; j < map->sub_stripes; j++) {
-			int idx = i + j;
-
-			if (zone_info[idx].alloc_offset == WP_MISSING_DEV ||
-			    zone_info[idx].alloc_offset == WP_CONVENTIONAL)
-				continue;
-			if (alloc == WP_MISSING_DEV || alloc == WP_CONVENTIONAL) {
-				alloc = zone_info[idx].alloc_offset;
-			} else if (unlikely(zone_info[idx].alloc_offset != alloc)) {
-				btrfs_err(fs_info,
-				"zoned: write pointer mismatch found in block group %llu",
-					  bg->start);
-				return -EIO;
-			}
-		}
-
-		raid0_allocs[i / map->sub_stripes] = alloc;
-		if (alloc == WP_CONVENTIONAL)
-			continue;
-		if (unlikely(alloc == WP_MISSING_DEV)) {
-			btrfs_err(fs_info,
-			"zoned: cannot recover write pointer of block group %llu due to missing device",
-				  bg->start);
-			return -EIO;
-		}
-
-		stripe_nr = alloc >> BTRFS_STRIPE_LEN_SHIFT;
-		stripe_offset = alloc & BTRFS_STRIPE_LEN_MASK;
-		if (stripe_offset == 0 && stripe_nr > 0) {
-			stripe_nr--;
-			stripe_offset = BTRFS_STRIPE_LEN;
-		}
-
-		alloc = ((stripe_nr * (map->num_stripes / map->sub_stripes) +
-			  (i / map->sub_stripes)) <<
-			 BTRFS_STRIPE_LEN_SHIFT) + stripe_offset;
-		last_alloc = max(last_alloc, alloc);
-	}
-	stripe_nr = 0;
-	stripe_offset = 0;
-
->>>>>>> hardened/6.19
 	if (last_alloc) {
 		u32 factor = map->num_stripes / map->sub_stripes;
 

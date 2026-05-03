@@ -373,14 +373,8 @@ int symbol__disassemble_capstone(const char *filename __maybe_unused,
 	    !strcmp(args->options->disassembler_style, "att"))
 		disassembler_style = true;
 
-<<<<<<< HEAD
 	if (capstone_init(maps__machine(thread__maps(args->ms->thread)), &handle, is_64bit,
 			  disassembler_style) < 0)
-||||||| 05f7e89ab9731
-	if (capstone_init(maps__machine(args->ms.maps), &handle, is_64bit, disassembler_style) < 0)
-=======
-	if (capstone_init(maps__machine(args->ms->maps), &handle, is_64bit, disassembler_style) < 0)
->>>>>>> hardened/6.19
 		goto err;
 
 	needs_cs_close = true;
@@ -490,14 +484,8 @@ int symbol__disassemble_capstone_powerpc(const char *filename __maybe_unused,
 	    !strcmp(args->options->disassembler_style, "att"))
 		disassembler_style = true;
 
-<<<<<<< HEAD
 	if (capstone_init(maps__machine(thread__maps(args->ms->thread)), &handle, is_64bit,
 			  disassembler_style) < 0)
-||||||| 05f7e89ab9731
-	if (capstone_init(maps__machine(args->ms.maps), &handle, is_64bit, disassembler_style) < 0)
-=======
-	if (capstone_init(maps__machine(args->ms->maps), &handle, is_64bit, disassembler_style) < 0)
->>>>>>> hardened/6.19
 		goto err;
 
 	needs_cs_close = true;

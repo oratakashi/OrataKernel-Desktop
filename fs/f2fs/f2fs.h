@@ -312,12 +312,6 @@ enum {
 #define DEF_CP_INTERVAL			60	/* 60 secs */
 #define DEF_IDLE_INTERVAL		5	/* 5 secs */
 #define DEF_DISABLE_INTERVAL		5	/* 5 secs */
-<<<<<<< HEAD
-||||||| 05f7e89ab9731
-#define DEF_ENABLE_INTERVAL		5	/* 5 secs */
-=======
-#define DEF_ENABLE_INTERVAL		16	/* 16 secs */
->>>>>>> hardened/6.19
 #define DEF_DISABLE_QUICK_INTERVAL	1	/* 1 secs */
 #define DEF_UMOUNT_DISCARD_TIMEOUT	5	/* 5 secs */
 
@@ -1583,7 +1577,6 @@ enum f2fs_lookup_mode {
 	LOOKUP_AUTO,
 };
 
-<<<<<<< HEAD
 /* For node type in __get_node_folio() */
 enum node_type {
 	NODE_TYPE_REGULAR,
@@ -1598,18 +1591,6 @@ enum node_type {
 #define F2FS_DEFAULT_TASK_PRIORITY		(DEFAULT_PRIO)
 #define F2FS_CRITICAL_TASK_PRIORITY		NICE_TO_PRIO(0)
 
-||||||| 05f7e89ab9731
-=======
-/* For node type in __get_node_folio() */
-enum node_type {
-	NODE_TYPE_REGULAR,
-	NODE_TYPE_INODE,
-	NODE_TYPE_XATTR,
-	NODE_TYPE_NON_INODE,
-};
-
-
->>>>>>> hardened/6.19
 static inline int f2fs_test_bit(unsigned int nr, char *addr);
 static inline void f2fs_set_bit(unsigned int nr, char *addr);
 static inline void f2fs_clear_bit(unsigned int nr, char *addr);
@@ -2922,7 +2903,6 @@ static inline block_t __start_sum_addr(struct f2fs_sb_info *sbi)
 	return le32_to_cpu(F2FS_CKPT(sbi)->cp_pack_start_sum);
 }
 
-<<<<<<< HEAD
 static inline bool __has_cursum_space(struct f2fs_sb_info *sbi,
 		struct f2fs_journal *journal, unsigned int size, int type)
 {
@@ -2931,17 +2911,6 @@ static inline bool __has_cursum_space(struct f2fs_sb_info *sbi,
 	return size <= MAX_SIT_JENTRIES(sbi, journal);
 }
 
-||||||| 05f7e89ab9731
-=======
-static inline bool __has_cursum_space(struct f2fs_sb_info *sbi,
-			struct f2fs_journal *journal, int size, int type)
-{
-	if (type == NAT_JOURNAL)
-		return size <= MAX_NAT_JENTRIES(sbi, journal);
-	return size <= MAX_SIT_JENTRIES(sbi, journal);
-}
-
->>>>>>> hardened/6.19
 extern void f2fs_mark_inode_dirty_sync(struct inode *inode, bool sync);
 static inline int inc_valid_node_count(struct f2fs_sb_info *sbi,
 					struct inode *inode, bool is_inode)

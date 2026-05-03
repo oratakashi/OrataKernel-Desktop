@@ -573,15 +573,8 @@ static const struct net_device_ops fbnic_netdev_ops = {
 	.ndo_start_xmit		= fbnic_xmit_frame,
 	.ndo_features_check	= fbnic_features_check,
 	.ndo_set_mac_address	= fbnic_set_mac,
-<<<<<<< HEAD
 	.ndo_change_mtu		= fbnic_change_mtu,
 	.ndo_set_rx_mode_async	= fbnic_set_rx_mode,
-||||||| 05f7e89ab9731
-	.ndo_set_rx_mode	= fbnic_set_rx_mode,
-=======
-	.ndo_change_mtu		= fbnic_change_mtu,
-	.ndo_set_rx_mode	= fbnic_set_rx_mode,
->>>>>>> hardened/6.19
 	.ndo_get_stats64	= fbnic_get_stats64,
 	.ndo_bpf		= fbnic_bpf,
 	.ndo_hwtstamp_get	= fbnic_hwtstamp_get,

@@ -140,18 +140,9 @@ allocate_of_node:
 		return -ENOMEM;
 
 	of_entry->dev = &pdev->dev;
-<<<<<<< HEAD
 	of_entry->np = of_node_get(np);
 	scoped_guard(mutex, &mfd_of_node_mutex)
 		list_add_tail(&of_entry->list, &mfd_of_node_list);
-||||||| 05f7e89ab9731
-	of_entry->np = np;
-	list_add_tail(&of_entry->list, &mfd_of_node_list);
-=======
-	of_entry->np = np;
-	scoped_guard(mutex, &mfd_of_node_mutex)
-		list_add_tail(&of_entry->list, &mfd_of_node_list);
->>>>>>> hardened/6.19
 
 	device_set_node(&pdev->dev, of_fwnode_handle(np));
 	return 0;

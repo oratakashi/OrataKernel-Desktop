@@ -959,12 +959,7 @@ static int reset_create_gpio_aux_device(struct reset_gpio_lookup *rgpio_dev,
 	ret = __auxiliary_device_add(adev, "reset");
 	if (ret) {
 		auxiliary_device_uninit(adev);
-<<<<<<< HEAD
 		ida_free(&reset_gpio_ida, id);
-||||||| 05f7e89ab9731
-		kfree(adev);
-=======
->>>>>>> hardened/6.19
 		return ret;
 	}
 

@@ -1294,14 +1294,7 @@ static int glocks_pending(unsigned int num_gh, struct gfs2_holder *ghs)
 int gfs2_glock_async_wait(unsigned int num_gh, struct gfs2_holder *ghs,
 			  unsigned int retries)
 {
-<<<<<<< HEAD
 	struct gfs2_sbd *sdp = glock_sbd(ghs[0].gh_gl);
-||||||| 05f7e89ab9731
-	struct gfs2_sbd *sdp = ghs[0].gh_gl->gl_name.ln_sbd;
-	int i, ret = 0, timeout = 0;
-=======
-	struct gfs2_sbd *sdp = ghs[0].gh_gl->gl_name.ln_sbd;
->>>>>>> hardened/6.19
 	unsigned long start_time = jiffies;
 	int i, ret = 0;
 	long timeout;

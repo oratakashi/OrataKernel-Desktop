@@ -1277,7 +1277,6 @@ static int hidg_bind(struct usb_configuration *c, struct usb_function *f)
 	}
 
 	/* create char device */
-<<<<<<< HEAD
 	hidg->cdev = cdev_alloc();
 	if (!hidg->cdev) {
 		status = -ENOMEM;
@@ -1286,17 +1285,6 @@ static int hidg_bind(struct usb_configuration *c, struct usb_function *f)
 	hidg->cdev->ops = &f_hidg_fops;
 
 	status = cdev_device_add(hidg->cdev, &hidg->dev);
-||||||| 05f7e89ab9731
-	cdev_init(&hidg->cdev, &f_hidg_fops);
-	status = cdev_device_add(&hidg->cdev, &hidg->dev);
-=======
-	hidg->cdev = cdev_alloc();
-	if (!hidg->cdev)
-		goto fail_free_all;
-	hidg->cdev->ops = &f_hidg_fops;
-
-	status = cdev_device_add(hidg->cdev, &hidg->dev);
->>>>>>> hardened/6.19
 	if (status)
 		goto fail_free_all;
 

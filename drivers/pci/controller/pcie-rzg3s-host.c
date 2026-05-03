@@ -1134,7 +1134,6 @@ static int rzg3s_pcie_config_init(struct rzg3s_pcie_host *host)
 	writel_relaxed(0xffffffff, host->pcie + RZG3S_PCI_CFG_BARMSK00L);
 	writel_relaxed(0xffffffff, host->pcie + RZG3S_PCI_CFG_BARMSK00U);
 
-<<<<<<< HEAD
 	/*
 	 * Explicitly program class code. RZ/G3E requires this configuration.
 	 * Harmless for RZ/G3S where this matches the hardware default.
@@ -1145,18 +1144,11 @@ static int rzg3s_pcie_config_init(struct rzg3s_pcie_host *host)
 	/* Disable access control to the CFGU */
 	writel_relaxed(0, host->axi + RZG3S_PCI_PERM);
 
-||||||| 05f7e89ab9731
-=======
-	/* Disable access control to the CFGU */
-	writel_relaxed(0, host->axi + RZG3S_PCI_PERM);
-
->>>>>>> hardened/6.19
 	/* Update bus info */
 	writeb_relaxed(primary_bus, host->pcie + PCI_PRIMARY_BUS);
 	writeb_relaxed(secondary_bus, host->pcie + PCI_SECONDARY_BUS);
 	writeb_relaxed(subordinate_bus, host->pcie + PCI_SUBORDINATE_BUS);
 
-<<<<<<< HEAD
 	return 0;
 }
 
@@ -1208,12 +1200,6 @@ static int rzg3e_pcie_config_post_init(struct rzg3s_pcie_host *host)
 	mask = RZG3S_PCI_RESET_RST_OUT_B | RZG3S_PCI_RESET_RST_RSM_B;
 	rzg3s_pcie_update_bits(host->axi, RZG3S_PCI_RESET, mask, mask);
 
-||||||| 05f7e89ab9731
-	/* Disable access control to the CFGU */
-	writel_relaxed(0, host->axi + RZG3S_PCI_PERM);
-
-=======
->>>>>>> hardened/6.19
 	return 0;
 }
 

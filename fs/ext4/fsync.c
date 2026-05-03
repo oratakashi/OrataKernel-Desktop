@@ -89,7 +89,6 @@ static int ext4_fsync_nojournal(struct file *file, loff_t start, loff_t end,
 	};
 	int ret;
 
-<<<<<<< HEAD
 	ret = mmb_fsync_noflush(file, &EXT4_I(inode)->i_metadata_bhs,
 				start, end, datasync);
 	if (ret)
@@ -102,23 +101,6 @@ static int ext4_fsync_nojournal(struct file *file, loff_t start, loff_t end,
 
 	ret = ext4_sync_parent(inode);
 
-||||||| 05f7e89ab9731
-	ret = generic_buffers_fsync_noflush(file, start, end, datasync);
-	if (!ret)
-		ret = ext4_sync_parent(inode);
-=======
-	ret = generic_buffers_fsync_noflush(file, start, end, datasync);
-	if (ret)
-		return ret;
-
-	/* Force writeout of inode table buffer to disk */
-	ret = ext4_write_inode(inode, &wbc);
-	if (ret)
-		return ret;
-
-	ret = ext4_sync_parent(inode);
-
->>>>>>> hardened/6.19
 	if (test_opt(inode->i_sb, BARRIER))
 		*needs_barrier = true;
 

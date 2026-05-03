@@ -585,7 +585,6 @@ static __always_inline void smbdirect_socket_init(struct smbdirect_socket *sc)
 	INIT_DELAYED_WORK(&sc->idle.timer_work, __smbdirect_socket_disabled_work);
 	disable_delayed_work_sync(&sc->idle.timer_work);
 
-<<<<<<< HEAD:fs/smb/smbdirect/socket.h
 	spin_lock_init(&sc->listen.lock);
 	INIT_LIST_HEAD(&sc->listen.pending);
 	INIT_LIST_HEAD(&sc->listen.ready);
@@ -599,12 +598,6 @@ static __always_inline void smbdirect_socket_init(struct smbdirect_socket *sc)
 	atomic_set(&sc->send_io.bcredits.count, 0);
 	init_waitqueue_head(&sc->send_io.bcredits.wait_queue);
 
-||||||| 05f7e89ab9731:fs/smb/common/smbdirect/smbdirect_socket.h
-=======
-	atomic_set(&sc->send_io.bcredits.count, 0);
-	init_waitqueue_head(&sc->send_io.bcredits.wait_queue);
-
->>>>>>> hardened/6.19:fs/smb/common/smbdirect/smbdirect_socket.h
 	atomic_set(&sc->send_io.lcredits.count, 0);
 	init_waitqueue_head(&sc->send_io.lcredits.wait_queue);
 

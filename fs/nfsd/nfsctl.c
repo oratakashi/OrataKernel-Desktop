@@ -1688,17 +1688,11 @@ int nfsd_nl_threads_set_doit(struct sk_buff *skb, struct genl_info *info)
 		}
 	}
 
-<<<<<<< HEAD
 	attr = info->attrs[NFSD_A_SERVER_MIN_THREADS];
 	if (attr)
 		nn->min_threads = nla_get_u32(attr);
 
 	ret = nfsd_svc(nrpools, nthreads, net, current_cred(), scope);
-||||||| 05f7e89ab9731
-	ret = nfsd_svc(nrpools, nthreads, net, get_current_cred(), scope);
-=======
-	ret = nfsd_svc(nrpools, nthreads, net, current_cred(), scope);
->>>>>>> hardened/6.19
 	if (ret > 0)
 		ret = 0;
 out_unlock:

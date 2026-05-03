@@ -1618,15 +1618,9 @@ int intel_pinctrl_probe(struct platform_device *pdev,
 		value = readl(regs + REVID);
 		if (value == ~0u)
 			return -ENODEV;
-<<<<<<< HEAD
 
 		revision = (value & REVID_MASK) >> REVID_SHIFT;
 		if (revision >= 0x092) {
-||||||| 05f7e89ab9731
-		if (((value & REVID_MASK) >> REVID_SHIFT) >= 0x94) {
-=======
-		if (((value & REVID_MASK) >> REVID_SHIFT) >= 0x92) {
->>>>>>> hardened/6.19
 			community->features |= PINCTRL_FEATURE_DEBOUNCE;
 			community->features |= PINCTRL_FEATURE_1K_PD;
 		}

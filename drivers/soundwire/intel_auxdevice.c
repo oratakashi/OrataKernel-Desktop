@@ -52,14 +52,9 @@ struct wake_capable_part {
 
 static struct wake_capable_part wake_capable_list[] = {
 	{0x01fa, 0x4243},
-<<<<<<< HEAD
 	{0x01fa, 0x4245},
 	{0x01fa, 0x4249},
 	{0x01fa, 0x4747},
-||||||| 05f7e89ab9731
-=======
-	{0x01fa, 0x4245},
->>>>>>> hardened/6.19
 	{0x025d, 0x5682},
 	{0x025d, 0x700},
 	{0x025d, 0x711},

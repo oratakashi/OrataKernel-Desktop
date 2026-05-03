@@ -946,18 +946,10 @@ static int ufx_ops_ioctl(struct fb_info *info, unsigned int cmd,
 
 	/* TODO: Help propose a standard fb.h ioctl to report mmap damage */
 	if (cmd == UFX_IOCTL_REPORT_DAMAGE) {
-<<<<<<< HEAD
 		struct dloarea *area __free(kfree) = kmalloc_obj(*area);
 		if (!area)
 			return -ENOMEM;
 
-||||||| 05f7e89ab9731
-=======
-		struct dloarea *area __free(kfree) = kmalloc(sizeof(*area), GFP_KERNEL);
-		if (!area)
-			return -ENOMEM;
-
->>>>>>> hardened/6.19
 		/* If we have a damage-aware client, turn fb_defio "off"
 		 * To avoid perf imact of unnecessary page fault handling.
 		 * Done by resetting the delay for this fb_info to a very

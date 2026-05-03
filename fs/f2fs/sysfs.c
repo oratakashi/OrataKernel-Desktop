@@ -966,7 +966,6 @@ out:
 		return count;
 	}
 
-<<<<<<< HEAD
 	if (!strcmp(a->attr.name, "adjust_lock_priority")) {
 		if (t >= BIT(LOCK_NAME_MAX - 1))
 			return -EINVAL;
@@ -997,11 +996,6 @@ out:
 	}
 
 	__sbi_store_value(a, sbi, ptr + a->offset, t);
-||||||| 05f7e89ab9731
-	*ui = (unsigned int)t;
-=======
-	__sbi_store_value(a, sbi, ptr + a->offset, t);
->>>>>>> hardened/6.19
 
 	return count;
 }

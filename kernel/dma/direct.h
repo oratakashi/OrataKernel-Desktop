@@ -89,17 +89,9 @@ static inline dma_addr_t dma_direct_map_phys(struct device *dev,
 	dma_addr_t dma_addr;
 
 	if (is_swiotlb_force_bounce(dev)) {
-<<<<<<< HEAD
 		if (!(attrs & DMA_ATTR_CC_SHARED)) {
 			if (attrs & (DMA_ATTR_MMIO | DMA_ATTR_REQUIRE_COHERENT))
 				return DMA_MAPPING_ERROR;
-||||||| 05f7e89ab9731
-		if (attrs & DMA_ATTR_MMIO)
-			goto err_overflow;
-=======
-		if (attrs & DMA_ATTR_MMIO)
-			return DMA_MAPPING_ERROR;
->>>>>>> hardened/6.19
 
 			return swiotlb_map(dev, phys, size, dir, attrs);
 		}

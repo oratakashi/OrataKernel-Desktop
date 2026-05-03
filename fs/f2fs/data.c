@@ -161,7 +161,6 @@ static void f2fs_finish_read_bio(struct bio *bio, bool in_task)
 			continue;
 		}
 
-<<<<<<< HEAD
 		if (folio_test_large(folio)) {
 			struct f2fs_folio_state *ffs = folio->private;
 
@@ -182,19 +181,6 @@ static void f2fs_finish_read_bio(struct bio *bio, bool in_task)
 
 		if (finished)
 			folio_end_read(folio, bio->bi_status == BLK_STS_OK);
-||||||| 05f7e89ab9731
-		dec_page_count(F2FS_F_SB(folio), __read_io_type(folio));
-		folio_end_read(folio, bio->bi_status == BLK_STS_OK);
-=======
-		dec_page_count(F2FS_F_SB(folio), __read_io_type(folio));
-
-		if (F2FS_F_SB(folio)->node_inode && is_node_folio(folio) &&
-			f2fs_sanity_check_node_footer(F2FS_F_SB(folio),
-				folio, folio->index, NODE_TYPE_REGULAR, true))
-			bio->bi_status = BLK_STS_IOERR;
-
-		folio_end_read(folio, bio->bi_status == BLK_STS_OK);
->>>>>>> hardened/6.19
 	}
 
 	if (ctx)
@@ -396,7 +382,6 @@ static void f2fs_write_end_io(struct bio *bio)
 						STOP_CP_REASON_WRITE_FAIL);
 		}
 
-<<<<<<< HEAD
 		if (is_node_folio(folio)) {
 			f2fs_sanity_check_node_footer(sbi, folio,
 				folio->index, NODE_TYPE_REGULAR, true);
@@ -404,19 +389,8 @@ static void f2fs_write_end_io(struct bio *bio)
 		}
 		if (f2fs_in_warm_node_list(folio))
 			f2fs_del_fsync_node_entry(sbi, folio);
-||||||| 05f7e89ab9731
-		f2fs_bug_on(sbi, is_node_folio(folio) &&
-				folio->index != nid_of_node(folio));
-=======
-		if (is_node_folio(folio)) {
-			f2fs_sanity_check_node_footer(sbi, folio,
-				folio->index, NODE_TYPE_REGULAR, true);
-			f2fs_bug_on(sbi, folio->index != nid_of_node(folio));
-		}
->>>>>>> hardened/6.19
 
 		dec_page_count(sbi, type);
-<<<<<<< HEAD
 
 		/*
 		 * we should access sbi before folio_end_writeback() to
@@ -426,22 +400,6 @@ static void f2fs_write_end_io(struct bio *bio)
 				wq_has_sleeper(&sbi->cp_wait))
 			wake_up(&sbi->cp_wait);
 
-||||||| 05f7e89ab9731
-		if (f2fs_in_warm_node_list(sbi, folio))
-			f2fs_del_fsync_node_entry(sbi, folio);
-=======
-
-		/*
-		 * we should access sbi before folio_end_writeback() to
-		 * avoid racing w/ kill_f2fs_super()
-		 */
-		if (type == F2FS_WB_CP_DATA && !get_pages(sbi, type) &&
-				wq_has_sleeper(&sbi->cp_wait))
-			wake_up(&sbi->cp_wait);
-
-		if (f2fs_in_warm_node_list(sbi, folio))
-			f2fs_del_fsync_node_entry(sbi, folio);
->>>>>>> hardened/6.19
 		folio_clear_f2fs_gcing(folio);
 		folio_end_writeback(folio);
 	}
@@ -1559,14 +1517,7 @@ static void f2fs_map_unlock(struct f2fs_sb_info *sbi,
 	if (flag == F2FS_GET_BLOCK_PRE_AIO)
 		f2fs_up_read_trace(&sbi->node_change, lc);
 	else
-<<<<<<< HEAD
 		f2fs_unlock_op(sbi, lc);
-||||||| 05f7e89ab9731
-		f2fs_unlock_op(sbi);
-	f2fs_up_read(&sbi->cp_enable_rwsem);
-=======
-		f2fs_unlock_op(sbi);
->>>>>>> hardened/6.19
 }
 
 int f2fs_get_block_locked(struct dnode_of_data *dn, pgoff_t index)

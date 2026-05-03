@@ -486,19 +486,11 @@ struct hisi_qp {
 	bool is_in_kernel;
 	u16 pasid;
 	struct uacce_queue *uacce_q;
-<<<<<<< HEAD
 
 	u32 ref_count;
 	spinlock_t qp_lock;
 	struct instance_backlog backlog;
 	const void **msg;
-||||||| 05f7e89ab9731
-=======
-
-	spinlock_t qp_lock;
-	struct instance_backlog backlog;
-	const void **msg;
->>>>>>> hardened/6.19
 };
 
 static inline int vfs_num_set(const char *val, const struct kernel_param *kp)

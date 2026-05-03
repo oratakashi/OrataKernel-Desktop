@@ -402,47 +402,8 @@ static int ntfs_truncate(struct inode *inode, loff_t new_size)
 {
 	int err;
 	struct ntfs_inode *ni = ntfs_i(inode);
-<<<<<<< HEAD
 	u64 new_valid = min_t(u64, ni->i_valid, new_size);
 
-||||||| 05f7e89ab9731
-	int err, dirty = 0;
-	u64 new_valid;
-
-	if (!S_ISREG(inode->i_mode))
-		return 0;
-
-	if (is_compressed(ni)) {
-		if (ni->i_valid > new_size)
-			ni->i_valid = new_size;
-	} else {
-		err = block_truncate_page(inode->i_mapping, new_size,
-					  ntfs_get_block);
-		if (err)
-			return err;
-	}
-
-	new_valid = ntfs_up_block(sb, min_t(u64, ni->i_valid, new_size));
-
-=======
-	u64 new_valid;
-	int err;
-
-	if (!S_ISREG(inode->i_mode))
-		return 0;
-
-	if (is_compressed(ni)) {
-		if (ni->i_valid > new_size)
-			ni->i_valid = new_size;
-	} else {
-		err = block_truncate_page(inode->i_mapping, new_size,
-					  ntfs_get_block);
-		if (err)
-			return err;
-	}
-
-	new_valid = ntfs_up_block(sb, min_t(u64, ni->i_valid, new_size));
->>>>>>> hardened/6.19
 	truncate_setsize(inode, new_size);
 
 	ni_lock(ni);

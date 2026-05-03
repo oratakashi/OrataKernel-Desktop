@@ -2278,87 +2278,12 @@ static int regulator_resolve_supply(struct regulator_dev *rdev)
 		if (done)
 			goto out;
 
-<<<<<<< HEAD
 		do_final_setup = false;
 	} else {
 		ret = set_supply(rdev, r);
-||||||| 05f7e89ab9731
-	/*
-	 * Automatically register for event forwarding from the new supply.
-	 * This creates the downstream propagation link for events like
-	 * under-voltage.
-	 */
-	ret = register_regulator_event_forwarding(rdev);
-	if (ret < 0)
-		rdev_warn(rdev, "Failed to register event forwarding: %pe\n",
-			  ERR_PTR(ret));
-
-	regulator_unlock_two(rdev, r, &ww_ctx);
-
-	/* rdev->supply was created in set_supply() */
-	link_and_create_debugfs(rdev->supply, r, &rdev->dev);
-
-	/*
-	 * In set_machine_constraints() we may have turned this regulator on
-	 * but we couldn't propagate to the supply if it hadn't been resolved
-	 * yet.  Do it now.
-	 */
-	if (rdev->use_count) {
-		ret = regulator_enable(rdev->supply);
-=======
-	/*
-	 * Automatically register for event forwarding from the new supply.
-	 * This creates the downstream propagation link for events like
-	 * under-voltage.
-	 */
-	ret = register_regulator_event_forwarding(rdev);
-	if (ret < 0) {
-		struct regulator *supply;
-
-		rdev_warn(rdev, "Failed to register event forwarding: %pe\n",
-			  ERR_PTR(ret));
-
-		supply = rdev->supply;
-		rdev->supply = NULL;
-
-		regulator_unlock_two(rdev, supply->rdev, &ww_ctx);
-
-		regulator_put(supply);
-		goto out;
-	}
-
-	regulator_unlock_two(rdev, r, &ww_ctx);
-
-	/* rdev->supply was created in set_supply() */
-	link_and_create_debugfs(rdev->supply, r, &rdev->dev);
-
-	/*
-	 * In set_machine_constraints() we may have turned this regulator on
-	 * but we couldn't propagate to the supply if it hadn't been resolved
-	 * yet.  Do it now.
-	 */
-	if (rdev->use_count) {
-		ret = regulator_enable(rdev->supply);
->>>>>>> hardened/6.19
 		if (ret < 0) {
-<<<<<<< HEAD
 			regulator_unlock_two(rdev, r, &ww_ctx);
 			put_device(&r->dev);
-||||||| 05f7e89ab9731
-			_regulator_put(rdev->supply);
-			rdev->supply = NULL;
-=======
-			struct regulator *supply;
-
-			regulator_lock_two(rdev, rdev->supply->rdev, &ww_ctx);
-
-			supply = rdev->supply;
-			rdev->supply = NULL;
-
-			regulator_unlock_two(rdev, supply->rdev, &ww_ctx);
-
-			regulator_put(supply);
->>>>>>> hardened/6.19
 			goto out;
 		}
 

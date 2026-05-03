@@ -543,15 +543,7 @@ static int ntfs_readdir(struct file *file, struct dir_context *ctx)
 	}
 
 out:
-<<<<<<< HEAD
 	kfree(name);
-||||||| 05f7e89ab9731
-
-	__putname(name);
-=======
-
-	kfree(name);
->>>>>>> hardened/6.19
 	put_indx_node(node);
 
 	if (!err) {

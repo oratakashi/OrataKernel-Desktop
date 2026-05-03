@@ -167,7 +167,6 @@ static void usb6fire_chip_disconnect(struct usb_interface *intf)
 	if (!chip)
 		return;
 
-<<<<<<< HEAD
 	chip->intf_count--;
 	if (chip->intf_count)
 		return;
@@ -187,28 +186,6 @@ static void usb6fire_chip_disconnect(struct usb_interface *intf)
 	usb6fire_chip_abort(chip);
 	if (card)
 		snd_card_free_when_closed(card);
-||||||| 05f7e89ab9731
-			chip->shutdown = true;
-			usb6fire_chip_abort(chip);
-		}
-	}
-=======
-			/*
-			 * Save card pointer before teardown.
-			 * snd_card_free_when_closed() may free card (and
-			 * the embedded chip) immediately, so it must be
-			 * called last and chip must not be accessed after.
-			 */
-			card = chip->card;
-			chip->shutdown = true;
-			if (card)
-				snd_card_disconnect(card);
-			usb6fire_chip_abort(chip);
-			if (card)
-				snd_card_free_when_closed(card);
-		}
-	}
->>>>>>> hardened/6.19
 }
 
 static const struct usb_device_id device_table[] = {

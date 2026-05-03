@@ -305,13 +305,7 @@ static struct bio *gfs2_log_get_bio(struct gfs2_sbd *sdp, u64 blkno,
 		gfs2_log_submit_write(biop);
 	}
 
-<<<<<<< HEAD
 	*biop = gfs2_log_alloc_bio(sdp, blkno, end_io, opf);
-||||||| 05f7e89ab9731
-	*biop = gfs2_log_alloc_bio(sdp, blkno, end_io);
-=======
-	*biop = gfs2_log_alloc_bio(sdp, blkno, end_io, op);
->>>>>>> hardened/6.19
 	return *biop;
 }
 
@@ -484,15 +478,8 @@ static void gfs2_jhead_process_page(struct gfs2_jdesc *jd, unsigned long index,
 	folio_put_refs(folio, 2);
 }
 
-<<<<<<< HEAD
 static struct bio *gfs2_chain_bio(struct bio *prev, unsigned int nr_iovecs,
 				  sector_t sector, blk_opf_t opf)
-||||||| 05f7e89ab9731
-static struct bio *gfs2_chain_bio(struct bio *prev, unsigned int nr_iovecs)
-=======
-static struct bio *gfs2_chain_bio(struct bio *prev, unsigned int nr_iovecs,
-				  blk_opf_t opf)
->>>>>>> hardened/6.19
 {
 	struct bio *new;
 
@@ -561,15 +548,8 @@ int gfs2_find_jhead(struct gfs2_jdesc *jd, struct gfs2_log_header_host *head)
 					unsigned int blocks =
 						(PAGE_SIZE - off) >> bsize_shift;
 
-<<<<<<< HEAD
 					bio = gfs2_chain_bio(bio, blocks, sector,
 							     REQ_OP_READ);
-||||||| 05f7e89ab9731
-					bio = gfs2_chain_bio(bio, blocks);
-=======
-					bio = gfs2_chain_bio(bio, blocks,
-							     REQ_OP_READ);
->>>>>>> hardened/6.19
 					goto add_block_to_new_bio;
 				}
 			}

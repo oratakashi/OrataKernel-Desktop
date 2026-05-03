@@ -118,13 +118,8 @@ void kthread_unpark(struct task_struct *k);
 void kthread_parkme(void);
 #define kthread_exit(result) do_exit(result)
 void kthread_complete_and_exit(struct completion *, long) __noreturn;
-<<<<<<< HEAD
 int kthreads_update_housekeeping(void);
 void kthread_do_exit(struct kthread *, long);
-||||||| 05f7e89ab9731
-=======
-void kthread_do_exit(struct kthread *, long);
->>>>>>> hardened/6.19
 
 int kthreadd(void *unused);
 extern struct task_struct *kthreadd_task;

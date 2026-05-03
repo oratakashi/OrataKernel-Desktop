@@ -1351,16 +1351,8 @@ static int am65_cpsw_nuss_rx_packets(struct am65_cpsw_rx_flow *flow,
 	ndev_priv = netdev_priv(ndev);
 	am65_cpsw_nuss_set_offload_fwd_mark(skb, ndev_priv->offload_fwd_mark);
 	skb_put(skb, pkt_len);
-<<<<<<< HEAD
 	if (port->rx_ts_filter)
 		am65_cpts_rx_timestamp(common->cpts, port_id, skb);
-||||||| 05f7e89ab9731
-	if (port->rx_ts_enabled)
-		am65_cpts_rx_timestamp(common->cpts, skb);
-=======
-	if (port->rx_ts_filter)
-		am65_cpts_rx_timestamp(common->cpts, skb);
->>>>>>> hardened/6.19
 	skb_mark_for_recycle(skb);
 	skb->protocol = eth_type_trans(skb, ndev);
 	am65_cpsw_nuss_rx_csum(skb, csum_info);

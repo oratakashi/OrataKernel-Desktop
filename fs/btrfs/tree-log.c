@@ -4613,13 +4613,8 @@ static void fill_inode_item(struct btrfs_trans_handle *trans,
 			    struct btrfs_inode *inode, bool log_inode_only,
 			    u64 logged_isize)
 {
-<<<<<<< HEAD
 	struct inode *vfs_inode = &inode->vfs_inode;
 	u64 gen = inode->generation;
-||||||| 05f7e89ab9731
-=======
-	u64 gen = BTRFS_I(inode)->generation;
->>>>>>> hardened/6.19
 	u64 flags;
 
 	if (log_inode_only) {
@@ -4634,46 +4629,16 @@ static void fill_inode_item(struct btrfs_trans_handle *trans,
 		 * and one can set it to 0 since that only happens on eviction
 		 * and we are holding a ref on the inode.
 		 */
-<<<<<<< HEAD
 		ASSERT(data_race(inode->logged_trans) > 0);
 		if (data_race(inode->logged_trans) < trans->transid)
 			gen = 0;
 
-||||||| 05f7e89ab9731
-		btrfs_set_inode_generation(leaf, item, 0);
-=======
-		ASSERT(data_race(BTRFS_I(inode)->logged_trans) > 0);
-		if (data_race(BTRFS_I(inode)->logged_trans) < trans->transid)
-			gen = 0;
-
->>>>>>> hardened/6.19
 		btrfs_set_inode_size(leaf, item, logged_isize);
 	} else {
-<<<<<<< HEAD
 		btrfs_set_inode_size(leaf, item, vfs_inode->i_size);
-||||||| 05f7e89ab9731
-		btrfs_set_inode_generation(leaf, item, BTRFS_I(inode)->generation);
-		btrfs_set_inode_size(leaf, item, inode->i_size);
-=======
-		btrfs_set_inode_size(leaf, item, inode->i_size);
->>>>>>> hardened/6.19
 	}
 
-<<<<<<< HEAD
 	btrfs_set_inode_generation(leaf, item, gen);
-||||||| 05f7e89ab9731
-	btrfs_set_inode_uid(leaf, item, i_uid_read(inode));
-	btrfs_set_inode_gid(leaf, item, i_gid_read(inode));
-	btrfs_set_inode_mode(leaf, item, inode->i_mode);
-	btrfs_set_inode_nlink(leaf, item, inode->i_nlink);
-=======
-	btrfs_set_inode_generation(leaf, item, gen);
-
-	btrfs_set_inode_uid(leaf, item, i_uid_read(inode));
-	btrfs_set_inode_gid(leaf, item, i_gid_read(inode));
-	btrfs_set_inode_mode(leaf, item, inode->i_mode);
-	btrfs_set_inode_nlink(leaf, item, inode->i_nlink);
->>>>>>> hardened/6.19
 
 	btrfs_set_inode_uid(leaf, item, i_uid_read(vfs_inode));
 	btrfs_set_inode_gid(leaf, item, i_gid_read(vfs_inode));

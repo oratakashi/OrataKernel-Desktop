@@ -3168,14 +3168,8 @@ static int team_device_event(struct notifier_block *unused,
 					       !!netif_oper_up(port->dev));
 		break;
 	case NETDEV_UNREGISTER:
-<<<<<<< HEAD
 		team_del_slave_on_unregister(netdev_from_priv(port->team),
 					     dev);
-||||||| 05f7e89ab9731
-		team_del_slave(port->team->dev, dev);
-=======
-		team_del_slave_on_unregister(port->team->dev, dev);
->>>>>>> hardened/6.19
 		break;
 	case NETDEV_FEAT_CHANGE:
 		if (!port->team->notifier_ctx) {

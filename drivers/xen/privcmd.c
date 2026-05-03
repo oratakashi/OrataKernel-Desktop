@@ -1580,18 +1580,10 @@ static int privcmd_open(struct inode *ino, struct file *file)
 {
 	struct privcmd_data *data;
 
-<<<<<<< HEAD
 	if (wait_event_interruptible(restrict_wait_wq, !restrict_wait) < 0)
 		return -EINTR;
 
 	data = kzalloc_obj(*data);
-||||||| 05f7e89ab9731
-=======
-	if (wait_event_interruptible(restrict_wait_wq, !restrict_wait) < 0)
-		return -EINTR;
-
-	data = kzalloc(sizeof(*data), GFP_KERNEL);
->>>>>>> hardened/6.19
 	if (!data)
 		return -ENOMEM;
 

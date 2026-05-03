@@ -1068,13 +1068,7 @@ static int symbol__parse_objdump_line(struct symbol *sym,
 			.ms = { .map = map__get(map), },
 		};
 
-<<<<<<< HEAD
 		if (!maps__find_ams(thread__maps(args->ms->thread), &target) &&
-||||||| 05f7e89ab9731
-		if (!maps__find_ams(args->ms.maps, &target) &&
-=======
-		if (!maps__find_ams(args->ms->maps, &target) &&
->>>>>>> hardened/6.19
 		    target.ms.sym->start == target.al_addr)
 			dl->ops.target.sym = target.ms.sym;
 

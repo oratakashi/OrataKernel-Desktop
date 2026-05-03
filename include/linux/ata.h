@@ -27,13 +27,6 @@ enum {
 	ATA_MAX_PRD		= 256,	/* we could make these 256/256 */
 	ATA_SECT_SIZE		= 512,
 	ATA_MAX_SECTORS		= 256,
-<<<<<<< HEAD
-||||||| 05f7e89ab9731
-	ATA_MAX_SECTORS_1024    = 1024,
-	ATA_MAX_SECTORS_8191    = 8191,
-=======
-	ATA_MAX_SECTORS_1024    = 1024,
->>>>>>> hardened/6.19
 	ATA_MAX_SECTORS_LBA48	= 65535,/* avoid count to be 0000h */
 	ATA_MAX_SECTORS_TAPE	= 65535,
 	ATA_MAX_TRIM_RNUM	= 64,	/* 512-byte payload / (6-byte LBA + 2-byte range per entry) */

@@ -1010,15 +1010,7 @@ static int gb_lights_light_config(struct gb_lights *glights, u8 id)
 	light->name = kstrndup(conf.name, NAMES_MAX, GFP_KERNEL);
 	if (!light->name)
 		return -ENOMEM;
-<<<<<<< HEAD
 	light->channels = kzalloc_objs(struct gb_channel, conf.channel_count);
-||||||| 05f7e89ab9731
-	light->channels = kcalloc(light->channels_count,
-				  sizeof(struct gb_channel), GFP_KERNEL);
-=======
-	light->channels = kcalloc(conf.channel_count,
-				  sizeof(struct gb_channel), GFP_KERNEL);
->>>>>>> hardened/6.19
 	if (!light->channels)
 		return -ENOMEM;
 	/*

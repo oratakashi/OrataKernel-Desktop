@@ -559,14 +559,7 @@ static int virt_wifi_newlink(struct net_device *dev,
 	eth_hw_addr_inherit(dev, priv->lowerdev);
 	netif_stacked_transfer_operstate(priv->lowerdev, dev);
 
-<<<<<<< HEAD
 	dev->ieee80211_ptr = kzalloc_obj(*dev->ieee80211_ptr);
-||||||| 05f7e89ab9731
-	SET_NETDEV_DEV(dev, &priv->lowerdev->dev);
-	dev->ieee80211_ptr = kzalloc(sizeof(*dev->ieee80211_ptr), GFP_KERNEL);
-=======
-	dev->ieee80211_ptr = kzalloc(sizeof(*dev->ieee80211_ptr), GFP_KERNEL);
->>>>>>> hardened/6.19
 
 	if (!dev->ieee80211_ptr) {
 		err = -ENOMEM;

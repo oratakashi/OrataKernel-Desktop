@@ -682,25 +682,9 @@ struct balance_callback {
 struct cfs_rq {
 	struct load_weight	load;
 	unsigned int		nr_queued;
-<<<<<<< HEAD
 	unsigned int		h_nr_queued;		/* SCHED_{NORMAL,BATCH,IDLE} */
 	unsigned int		h_nr_runnable;		/* SCHED_{NORMAL,BATCH,IDLE} */
 	unsigned int		h_nr_idle;		/* SCHED_IDLE */
-||||||| 05f7e89ab9731
-	unsigned int		h_nr_queued;       /* SCHED_{NORMAL,BATCH,IDLE} */
-	unsigned int		h_nr_runnable;     /* SCHED_{NORMAL,BATCH,IDLE} */
-	unsigned int		h_nr_idle; /* SCHED_IDLE */
-
-	s64			avg_vruntime;
-	u64			avg_load;
-=======
-	unsigned int		h_nr_queued;       /* SCHED_{NORMAL,BATCH,IDLE} */
-	unsigned int		h_nr_runnable;     /* SCHED_{NORMAL,BATCH,IDLE} */
-	unsigned int		h_nr_idle; /* SCHED_IDLE */
-
-	s64			sum_w_vruntime;
-	u64			sum_weight;
->>>>>>> hardened/6.19
 
 	s64			sum_w_vruntime;
 	u64			sum_weight;

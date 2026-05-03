@@ -84,7 +84,6 @@ static void lease_del_list(struct oplock_info *opinfo)
 
 static struct lease_table *alloc_lease_table(struct oplock_info *opinfo)
 {
-<<<<<<< HEAD
 	struct lease_table *lb;
 
 	lb = kmalloc_obj(struct lease_table, KSMBD_DEFAULT_GFP);
@@ -96,23 +95,7 @@ static struct lease_table *alloc_lease_table(struct oplock_info *opinfo)
 	INIT_LIST_HEAD(&lb->lease_list);
 	spin_lock_init(&lb->lb_lock);
 	return lb;
-||||||| 05f7e89ab9731
-	write_lock(&lease_list_lock);
-	list_add(&lb->l_entry, &lease_table_list);
-	write_unlock(&lease_list_lock);
-=======
-	struct lease_table *lb;
-
 	lb = kmalloc(sizeof(struct lease_table), KSMBD_DEFAULT_GFP);
-	if (!lb)
-		return NULL;
-
-	memcpy(lb->client_guid, opinfo->conn->ClientGUID,
-	       SMB2_CLIENT_GUID_SIZE);
-	INIT_LIST_HEAD(&lb->lease_list);
-	spin_lock_init(&lb->lb_lock);
-	return lb;
->>>>>>> hardened/6.19
 }
 
 static int alloc_lease(struct oplock_info *opinfo, struct lease_ctx_info *lctx)

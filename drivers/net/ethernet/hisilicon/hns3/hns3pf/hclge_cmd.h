@@ -742,13 +742,8 @@ struct hclge_fd_tcam_config_3_cmd {
 #define HCLGE_FD_AD_TC_OVRD_B		16
 #define HCLGE_FD_AD_TC_SIZE_S		17
 #define HCLGE_FD_AD_TC_SIZE_M		GENMASK(20, 17)
-<<<<<<< HEAD
 #define HCLGE_FD_AD_QID_H_B		21
 #define HCLGE_FD_AD_COUNTER_NUM_H_B	26
-||||||| 05f7e89ab9731
-=======
-#define HCLGE_FD_AD_QID_H_B		21
->>>>>>> hardened/6.19
 
 struct hclge_fd_ad_config_cmd {
 	u8 stage;

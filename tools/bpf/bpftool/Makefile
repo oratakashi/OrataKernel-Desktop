@@ -139,16 +139,8 @@ include $(FEATURES_DUMP)
 endif
 endif
 
-<<<<<<< HEAD
 LIBS = $(LIBBPF) -lelf $(CRYPTO_LIBS) -lz
 LIBS_BOOTSTRAP = $(LIBBPF_BOOTSTRAP) -lelf $(CRYPTO_LIBS) -lz
-||||||| 05f7e89ab9731
-LIBS = $(LIBBPF) -lelf -lz -lcrypto
-LIBS_BOOTSTRAP = $(LIBBPF_BOOTSTRAP) -lelf -lz -lcrypto
-=======
-LIBS = $(LIBBPF) -lelf -lcrypto -lz
-LIBS_BOOTSTRAP = $(LIBBPF_BOOTSTRAP) -lelf -lcrypto -lz
->>>>>>> hardened/6.19
 
 ifeq ($(feature-libelf-zstd),1)
 LIBS += -lzstd

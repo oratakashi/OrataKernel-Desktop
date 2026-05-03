@@ -825,7 +825,6 @@ struct damon_ctx {
 	bool walk_control_obsolete;
 	struct mutex walk_control_lock;
 
-<<<<<<< HEAD
 	/*
 	 * indicate if this may be corrupted.  Currentonly this is set only for
 	 * damon_commit_ctx() failure.
@@ -833,18 +832,6 @@ struct damon_ctx {
 	bool maybe_corrupted;
 
 	/* Working thread of the given DAMON context */
-||||||| 05f7e89ab9731
-/* public: */
-=======
-	/*
-	 * indicate if this may be corrupted.  Currentonly this is set only for
-	 * damon_commit_ctx() failure.
-	 */
-	bool maybe_corrupted;
-
-/* public: */
-	/* Working thread of the given DAMON context */
->>>>>>> hardened/6.19
 	struct task_struct *kdamond;
 	/* Protects @kdamond field access */
 	struct mutex kdamond_lock;
@@ -1009,14 +996,8 @@ int damos_walk(struct damon_ctx *ctx, struct damos_walk_control *control);
 
 int damon_set_region_biggest_system_ram_default(struct damon_target *t,
 				unsigned long *start, unsigned long *end,
-<<<<<<< HEAD
 				unsigned long addr_unit,
 				unsigned long min_region_sz);
-||||||| 05f7e89ab9731
-				unsigned long min_sz_region);
-=======
-				unsigned long min_region_sz);
->>>>>>> hardened/6.19
 
 #endif	/* CONFIG_DAMON */
 

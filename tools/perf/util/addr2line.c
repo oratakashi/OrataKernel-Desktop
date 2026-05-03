@@ -18,16 +18,6 @@
 
 #define MAX_INLINE_NEST 1024
 
-<<<<<<< HEAD
-||||||| 05f7e89ab9731
-/* If addr2line doesn't return data for 1 second then timeout. */
-int addr2line_timeout_ms = 1 * 1000;
-
-=======
-/* If addr2line doesn't return data for 5 seconds then timeout. */
-int addr2line_timeout_ms = 5 * 1000;
-
->>>>>>> hardened/6.19
 static int filename_split(char *filename, unsigned int *line_nr)
 {
 	char *sep;

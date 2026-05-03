@@ -656,26 +656,15 @@ static inline bool cpusets_are_exclusive(struct cpuset *cs1, struct cpuset *cs2)
  * Returns: true if CPU exclusivity conflict exists, false otherwise
  *
  * Conflict detection rules:
-<<<<<<< HEAD
  *  o cgroup v1
  *    See cpuset1_cpus_excl_conflict()
  *  o cgroup v2
  *    - The exclusive_cpus values cannot overlap.
  *    - New exclusive_cpus cannot be a superset of a sibling's cpus_allowed.
-||||||| 05f7e89ab9731
- * 1. If either cpuset is CPU exclusive, they must be mutually exclusive
- * 2. exclusive_cpus masks cannot intersect between cpusets
- * 3. The allowed CPUs of one cpuset cannot be a subset of another's exclusive CPUs
-=======
- * 1. If either cpuset is CPU exclusive, they must be mutually exclusive
- * 2. exclusive_cpus masks cannot intersect between cpusets
- * 3. The allowed CPUs of a sibling cpuset cannot be a subset of the new exclusive CPUs
->>>>>>> hardened/6.19
  */
 static inline bool cpus_excl_conflict(struct cpuset *trial, struct cpuset *sibling,
 				      bool xcpus_changed)
 {
-<<<<<<< HEAD
 	if (!cpuset_v2())
 		return cpuset1_cpus_excl_conflict(trial, sibling);
 
@@ -683,44 +672,9 @@ static inline bool cpus_excl_conflict(struct cpuset *trial, struct cpuset *sibli
 	if (xcpus_changed && !cpumask_empty(sibling->cpus_allowed) &&
 	    cpumask_subset(sibling->cpus_allowed, trial->exclusive_cpus))
 		return true;
-||||||| 05f7e89ab9731
-	/* If either cpuset is exclusive, check if they are mutually exclusive */
-	if (is_cpu_exclusive(cs1) || is_cpu_exclusive(cs2))
-		return !cpusets_are_exclusive(cs1, cs2);
-=======
-	/* If either cpuset is exclusive, check if they are mutually exclusive */
-	if (is_cpu_exclusive(trial) || is_cpu_exclusive(sibling))
-		return !cpusets_are_exclusive(trial, sibling);
->>>>>>> hardened/6.19
 
 	/* Exclusive_cpus cannot intersect */
-<<<<<<< HEAD
 	return cpumask_intersects(trial->exclusive_cpus, sibling->exclusive_cpus);
-||||||| 05f7e89ab9731
-	if (cpumask_intersects(cs1->exclusive_cpus, cs2->exclusive_cpus))
-		return true;
-
-	/* The cpus_allowed of one cpuset cannot be a subset of another cpuset's exclusive_cpus */
-	if (!cpumask_empty(cs1->cpus_allowed) &&
-	    cpumask_subset(cs1->cpus_allowed, cs2->exclusive_cpus))
-		return true;
-
-	if (!cpumask_empty(cs2->cpus_allowed) &&
-	    cpumask_subset(cs2->cpus_allowed, cs1->exclusive_cpus))
-		return true;
-
-	return false;
-=======
-	if (cpumask_intersects(trial->exclusive_cpus, sibling->exclusive_cpus))
-		return true;
-
-	/* The cpus_allowed of a sibling cpuset cannot be a subset of the new exclusive_cpus */
-	if (xcpus_changed && !cpumask_empty(sibling->cpus_allowed) &&
-	    cpumask_subset(sibling->cpus_allowed, trial->exclusive_cpus))
-		return true;
-
-	return false;
->>>>>>> hardened/6.19
 }
 
 static inline bool mems_excl_conflict(struct cpuset *cs1, struct cpuset *cs2)

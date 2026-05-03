@@ -8,16 +8,11 @@
 #include "bpf_experimental.h"
 
 extern void bpf_rcu_read_lock(void) __ksym;
-<<<<<<< HEAD
 extern void bpf_rcu_read_unlock(void) __ksym;
 extern void bpf_preempt_disable(void) __ksym;
 extern void bpf_preempt_enable(void) __ksym;
 extern void bpf_local_irq_save(unsigned long *) __ksym;
 extern void bpf_local_irq_restore(unsigned long *) __ksym;
-||||||| 05f7e89ab9731
-=======
-extern void bpf_rcu_read_unlock(void) __ksym;
->>>>>>> hardened/6.19
 
 #define private(name) SEC(".bss." #name) __hidden __attribute__((aligned(8)))
 

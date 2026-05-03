@@ -618,19 +618,9 @@ static ssize_t sysdata_release_enabled_show(struct config_item *item,
 	struct netconsole_target *nt = to_target(item->ci_parent);
 	bool release_enabled;
 
-<<<<<<< HEAD
 	dynamic_netconsole_mutex_lock();
 	release_enabled = !!(nt->sysdata_fields & SYSDATA_RELEASE);
 	dynamic_netconsole_mutex_unlock();
-||||||| 05f7e89ab9731
-	mutex_lock(&dynamic_netconsole_mutex);
-	release_enabled = !!(nt->sysdata_fields & SYSDATA_TASKNAME);
-	mutex_unlock(&dynamic_netconsole_mutex);
-=======
-	mutex_lock(&dynamic_netconsole_mutex);
-	release_enabled = !!(nt->sysdata_fields & SYSDATA_RELEASE);
-	mutex_unlock(&dynamic_netconsole_mutex);
->>>>>>> hardened/6.19
 
 	return sysfs_emit(buf, "%d\n", release_enabled);
 }

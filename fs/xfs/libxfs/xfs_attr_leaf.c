@@ -1689,23 +1689,10 @@ xfs_attr3_leaf_add_work(
 	if (be16_to_cpu(entry->nameidx) < ichdr->firstused)
 		ichdr->firstused = be16_to_cpu(entry->nameidx);
 
-<<<<<<< HEAD
 	new_end = xfs_attr_leaf_entries_end(ichdr->count, leaf);
 	old_end = new_end - sizeof(struct xfs_attr_leaf_entry);
 
 	ASSERT(ichdr->firstused >= new_end);
-||||||| 05f7e89ab9731
-	ASSERT(ichdr->firstused >= ichdr->count * sizeof(xfs_attr_leaf_entry_t)
-					+ xfs_attr3_leaf_hdr_size(leaf));
-	tmp = (ichdr->count - 1) * sizeof(xfs_attr_leaf_entry_t)
-					+ xfs_attr3_leaf_hdr_size(leaf);
-=======
-	new_end = ichdr->count * sizeof(struct xfs_attr_leaf_entry) +
-					xfs_attr3_leaf_hdr_size(leaf);
-	old_end = new_end - sizeof(struct xfs_attr_leaf_entry);
-
-	ASSERT(ichdr->firstused >= new_end);
->>>>>>> hardened/6.19
 
 	for (i = 0; i < XFS_ATTR_LEAF_MAPSIZE; i++) {
 		int		diff = 0;

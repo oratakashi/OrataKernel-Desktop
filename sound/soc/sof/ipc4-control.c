@@ -512,7 +512,6 @@ static int sof_ipc4_set_get_bytes_data(struct snd_sof_dev *sdev,
 	int ret = 0;
 
 	/* Send the new data to the firmware only if it is powered up */
-<<<<<<< HEAD
 	if (set) {
 		if (!pm_runtime_active(sdev->dev))
 			return 0;
@@ -530,21 +529,6 @@ static int sof_ipc4_set_get_bytes_data(struct snd_sof_dev *sdev,
 		else
 			return sof_ipc4_refresh_bytes_control(scontrol, lock);
 	}
-||||||| 05f7e89ab9731
-	if (set && !pm_runtime_active(sdev->dev))
-		return 0;
-=======
-	if (set) {
-		if (!pm_runtime_active(sdev->dev))
-			return 0;
-
-		if (!data->size) {
-			dev_dbg(sdev->dev, "%s: No data to be sent.\n",
-				scontrol->name);
-			return 0;
-		}
-	}
->>>>>>> hardened/6.19
 
 	msg->extension = SOF_IPC4_MOD_EXT_MSG_PARAM_ID(data->type);
 

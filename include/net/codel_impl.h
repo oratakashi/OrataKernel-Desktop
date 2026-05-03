@@ -158,15 +158,8 @@ static struct sk_buff *codel_dequeue(void *ctx,
 	bool drop;
 
 	if (!skb) {
-<<<<<<< HEAD
 		vars->first_above_time = 0;
 		WRITE_ONCE(vars->dropping, false);
-||||||| 05f7e89ab9731
-		vars->dropping = false;
-=======
-		vars->first_above_time = 0;
-		vars->dropping = false;
->>>>>>> hardened/6.19
 		return skb;
 	}
 	now = codel_get_time();

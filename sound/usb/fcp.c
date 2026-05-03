@@ -653,15 +653,8 @@ static int fcp_ioctl_set_meter_map(struct usb_mixer_interface *mixer,
 	/* If the control doesn't exist, create it */
 	if (!private->meter_ctl) {
 		/* Allocate buffer for the map */
-<<<<<<< HEAD
 		s16 *new_map __free(kfree) =
 			kmalloc_objs(s16, map.map_size);
-||||||| 05f7e89ab9731
-		new_map = kmalloc_array(map.map_size, sizeof(s16), GFP_KERNEL);
-=======
-		s16 *new_map __free(kfree) =
-			kmalloc_array(map.map_size, sizeof(s16), GFP_KERNEL);
->>>>>>> hardened/6.19
 		if (!new_map)
 			return -ENOMEM;
 

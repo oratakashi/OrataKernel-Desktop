@@ -322,7 +322,6 @@ replay_again:
 			rqst[num_rqst].rq_iov = &vars->qi_iov;
 			rqst[num_rqst].rq_nvec = 1;
 
-<<<<<<< HEAD
 			/* TBD: fix following to allow for longer SIDs */
 			rc = SMB2_query_info_init(tcon, server,
 						  &rqst[num_rqst],
@@ -333,34 +332,6 @@ replay_again:
 						  (PATH_MAX * 2) +
 						  (sizeof(struct smb_sid) * 2), 0, NULL);
 			if (rc)
-||||||| 05f7e89ab9731
-			if (cfile) {
-				/* TBD: fix following to allow for longer SIDs */
-				rc = SMB2_query_info_init(tcon, server,
-							  &rqst[num_rqst],
-							  cfile->fid.persistent_fid,
-							  cfile->fid.volatile_fid,
-							  SMB_FIND_FILE_POSIX_INFO,
-							  SMB2_O_INFO_FILE, 0,
-							  sizeof(struct smb311_posix_qinfo *) +
-							  (PATH_MAX * 2) +
-							  (sizeof(struct smb_sid) * 2), 0, NULL);
-			} else {
-				rc = SMB2_query_info_init(tcon, server,
-							  &rqst[num_rqst],
-							  COMPOUND_FID,
-							  COMPOUND_FID,
-							  SMB_FIND_FILE_POSIX_INFO,
-							  SMB2_O_INFO_FILE, 0,
-							  sizeof(struct smb311_posix_qinfo *) +
-							  (PATH_MAX * 2) +
-							  (sizeof(struct smb_sid) * 2), 0, NULL);
-			}
-			if (!rc && (!cfile || num_rqst > 1)) {
-				smb2_set_next_command(tcon, &rqst[num_rqst]);
-				smb2_set_related(&rqst[num_rqst]);
-			} else if (rc) {
-=======
 			if (cfile) {
 				/* TBD: fix following to allow for longer SIDs */
 				rc = SMB2_query_info_init(tcon, server,
@@ -387,7 +358,6 @@ replay_again:
 				smb2_set_next_command(tcon, &rqst[num_rqst]);
 				smb2_set_related(&rqst[num_rqst]);
 			} else if (rc) {
->>>>>>> hardened/6.19
 				goto finished;
 			set_next_compound(tcon, cfile, i, num_cmds, rqst, &num_rqst);
 			trace_smb3_posix_query_info_compound_enter(xid, tcon->tid,

@@ -346,14 +346,7 @@ static ssize_t sched_server_write_common(struct file *filp, const char __user *u
 	struct sched_dl_entity *dl_se = (struct sched_dl_entity *)server;
 	u64 old_runtime, runtime, period;
 	struct rq *rq = cpu_rq(cpu);
-<<<<<<< HEAD
 	int retval = 0;
-||||||| 05f7e89ab9731
-	u64 runtime, period;
-=======
-	u64 runtime, period;
-	int retval = 0;
->>>>>>> hardened/6.19
 	size_t err;
 	u64 value;
 
@@ -389,43 +382,16 @@ static ssize_t sched_server_write_common(struct file *filp, const char __user *u
 		retval = dl_server_apply_params(dl_se, runtime, period, 0);
 		dl_server_start(dl_se);
 
-<<<<<<< HEAD
 		if (retval < 0)
 			return retval;
 	}
-||||||| 05f7e89ab9731
-		retval = dl_server_apply_params(&rq->fair_server, runtime, period, 0);
-		if (retval)
-			cnt = retval;
-=======
-		retval = dl_server_apply_params(&rq->fair_server, runtime, period, 0);
->>>>>>> hardened/6.19
 
-<<<<<<< HEAD
 	if (!!old_runtime ^ !!runtime) {
 		pr_info("%s server %sabled on CPU %d%s.\n",
 			server == &rq->fair_server ? "Fair" : "Ext",
 			runtime ? "en" : "dis",
 			cpu_of(rq),
 			runtime ? "" : ", system may malfunction due to starvation");
-||||||| 05f7e89ab9731
-		if (!runtime)
-			printk_deferred("Fair server disabled in CPU %d, system may crash due to starvation.\n",
-					cpu_of(rq));
-
-		if (rq->cfs.h_nr_queued)
-			dl_server_start(&rq->fair_server);
-=======
-		if (!runtime)
-			printk_deferred("Fair server disabled in CPU %d, system may crash due to starvation.\n",
-					cpu_of(rq));
-
-		if (rq->cfs.h_nr_queued)
-			dl_server_start(&rq->fair_server);
-
-		if (retval < 0)
-			return retval;
->>>>>>> hardened/6.19
 	}
 
 	*ppos += cnt;
@@ -951,16 +917,9 @@ static void print_rq(struct seq_file *m, struct rq *rq, int rq_cpu)
 
 void print_cfs_rq(struct seq_file *m, int cpu, struct cfs_rq *cfs_rq)
 {
-<<<<<<< HEAD
 	s64 left_vruntime = -1, right_vruntime = -1, left_deadline = -1, spread;
 	s64 zero_vruntime = -1, sum_w_vruntime = -1;
 	u64 avruntime;
-||||||| 05f7e89ab9731
-	s64 left_vruntime = -1, zero_vruntime, right_vruntime = -1, left_deadline = -1, spread;
-=======
-	s64 left_vruntime = -1, zero_vruntime, right_vruntime = -1, left_deadline = -1, spread;
-	u64 avruntime;
->>>>>>> hardened/6.19
 	struct sched_entity *last, *first, *root;
 	struct rq *rq = cpu_rq(cpu);
 	unsigned int sum_shift;
@@ -986,15 +945,10 @@ void print_cfs_rq(struct seq_file *m, int cpu, struct cfs_rq *cfs_rq)
 	if (last)
 		right_vruntime = last->vruntime;
 	zero_vruntime = cfs_rq->zero_vruntime;
-<<<<<<< HEAD
 	sum_w_vruntime = cfs_rq->sum_w_vruntime;
 	sum_weight = cfs_rq->sum_weight;
 	sum_shift = cfs_rq->sum_shift;
 	avruntime = avg_vruntime(cfs_rq);
-||||||| 05f7e89ab9731
-=======
-	avruntime = avg_vruntime(cfs_rq);
->>>>>>> hardened/6.19
 	raw_spin_rq_unlock_irqrestore(rq, flags);
 
 	SEQ_printf(m, "  .%-30s: %Ld.%06ld\n", "left_deadline",

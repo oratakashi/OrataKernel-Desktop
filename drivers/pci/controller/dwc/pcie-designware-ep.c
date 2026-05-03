@@ -147,7 +147,6 @@ static int dw_pcie_ep_ib_atu_bar(struct dw_pcie_ep *ep, u8 func_no, int type,
 	return 0;
 }
 
-<<<<<<< HEAD
 static void dw_pcie_ep_clear_ib_maps(struct dw_pcie_ep *ep, u8 func_no, enum pci_barno bar)
 {
 	struct dw_pcie_ep_func *ep_func = dw_pcie_ep_get_func_from_ep(ep, func_no);
@@ -327,187 +326,6 @@ err:
 	return ret;
 }
 
-||||||| 05f7e89ab9731
-=======
-static void dw_pcie_ep_clear_ib_maps(struct dw_pcie_ep *ep, u8 func_no, enum pci_barno bar)
-{
-	struct dw_pcie_ep_func *ep_func = dw_pcie_ep_get_func_from_ep(ep, func_no);
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
-	struct device *dev = pci->dev;
-	unsigned int i, num;
-	u32 atu_index;
-	u32 *indexes;
-
-	if (!ep_func)
-		return;
-
-	/* Tear down the BAR Match Mode mapping, if any. */
-	if (ep_func->bar_to_atu[bar]) {
-		atu_index = ep_func->bar_to_atu[bar] - 1;
-		dw_pcie_disable_atu(pci, PCIE_ATU_REGION_DIR_IB, atu_index);
-		clear_bit(atu_index, ep->ib_window_map);
-		ep_func->bar_to_atu[bar] = 0;
-	}
-
-	/* Tear down all Address Match Mode mappings, if any. */
-	indexes = ep_func->ib_atu_indexes[bar];
-	num = ep_func->num_ib_atu_indexes[bar];
-	ep_func->ib_atu_indexes[bar] = NULL;
-	ep_func->num_ib_atu_indexes[bar] = 0;
-	if (!indexes)
-		return;
-	for (i = 0; i < num; i++) {
-		dw_pcie_disable_atu(pci, PCIE_ATU_REGION_DIR_IB, indexes[i]);
-		clear_bit(indexes[i], ep->ib_window_map);
-	}
-	devm_kfree(dev, indexes);
-}
-
-static u64 dw_pcie_ep_read_bar_assigned(struct dw_pcie_ep *ep, u8 func_no,
-					enum pci_barno bar, int flags)
-{
-	u32 reg = PCI_BASE_ADDRESS_0 + (4 * bar);
-	u32 lo, hi;
-	u64 addr;
-
-	lo = dw_pcie_ep_readl_dbi(ep, func_no, reg);
-
-	if (flags & PCI_BASE_ADDRESS_SPACE)
-		return lo & PCI_BASE_ADDRESS_IO_MASK;
-
-	addr = lo & PCI_BASE_ADDRESS_MEM_MASK;
-	if (!(flags & PCI_BASE_ADDRESS_MEM_TYPE_64))
-		return addr;
-
-	hi = dw_pcie_ep_readl_dbi(ep, func_no, reg + 4);
-	return addr | ((u64)hi << 32);
-}
-
-static int dw_pcie_ep_validate_submap(struct dw_pcie_ep *ep,
-				      const struct pci_epf_bar_submap *submap,
-				      unsigned int num_submap, size_t bar_size)
-{
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
-	u32 align = pci->region_align;
-	size_t off = 0;
-	unsigned int i;
-	size_t size;
-
-	if (!align || !IS_ALIGNED(bar_size, align))
-		return -EINVAL;
-
-	/*
-	 * The submap array order defines the BAR layout (submap[0] starts
-	 * at offset 0 and each entry immediately follows the previous
-	 * one). Here, validate that it forms a strict, gapless
-	 * decomposition of the BAR:
-	 *  - each entry has a non-zero size
-	 *  - sizes, implicit offsets and phys_addr are aligned to
-	 *    pci->region_align
-	 *  - each entry lies within the BAR range
-	 *  - the entries exactly cover the whole BAR
-	 *
-	 * Note: dw_pcie_prog_inbound_atu() also checks alignment for the
-	 * PCI address and the target phys_addr, but validating up-front
-	 * avoids partially programming iATU windows in vain.
-	 */
-	for (i = 0; i < num_submap; i++) {
-		size = submap[i].size;
-
-		if (!size)
-			return -EINVAL;
-
-		if (!IS_ALIGNED(size, align) || !IS_ALIGNED(off, align))
-			return -EINVAL;
-
-		if (!IS_ALIGNED(submap[i].phys_addr, align))
-			return -EINVAL;
-
-		if (off > bar_size || size > bar_size - off)
-			return -EINVAL;
-
-		off += size;
-	}
-	if (off != bar_size)
-		return -EINVAL;
-
-	return 0;
-}
-
-/* Address Match Mode inbound iATU mapping */
-static int dw_pcie_ep_ib_atu_addr(struct dw_pcie_ep *ep, u8 func_no, int type,
-				  const struct pci_epf_bar *epf_bar)
-{
-	struct dw_pcie_ep_func *ep_func = dw_pcie_ep_get_func_from_ep(ep, func_no);
-	const struct pci_epf_bar_submap *submap = epf_bar->submap;
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
-	enum pci_barno bar = epf_bar->barno;
-	struct device *dev = pci->dev;
-	u64 pci_addr, parent_bus_addr;
-	u64 size, base, off = 0;
-	int free_win, ret;
-	unsigned int i;
-	u32 *indexes;
-
-	if (!ep_func || !epf_bar->num_submap || !submap || !epf_bar->size)
-		return -EINVAL;
-
-	ret = dw_pcie_ep_validate_submap(ep, submap, epf_bar->num_submap,
-					 epf_bar->size);
-	if (ret)
-		return ret;
-
-	base = dw_pcie_ep_read_bar_assigned(ep, func_no, bar, epf_bar->flags);
-	if (!base) {
-		dev_err(dev,
-			"BAR%u not assigned, cannot set up sub-range mappings\n",
-			bar);
-		return -EINVAL;
-	}
-
-	indexes = devm_kcalloc(dev, epf_bar->num_submap, sizeof(*indexes),
-			       GFP_KERNEL);
-	if (!indexes)
-		return -ENOMEM;
-
-	ep_func->ib_atu_indexes[bar] = indexes;
-	ep_func->num_ib_atu_indexes[bar] = 0;
-
-	for (i = 0; i < epf_bar->num_submap; i++) {
-		size = submap[i].size;
-		parent_bus_addr = submap[i].phys_addr;
-
-		if (off > (~0ULL) - base) {
-			ret = -EINVAL;
-			goto err;
-		}
-
-		pci_addr = base + off;
-		off += size;
-
-		free_win = find_first_zero_bit(ep->ib_window_map,
-					       pci->num_ib_windows);
-		if (free_win >= pci->num_ib_windows) {
-			ret = -ENOSPC;
-			goto err;
-		}
-
-		ret = dw_pcie_prog_inbound_atu(pci, free_win, type,
-					       parent_bus_addr, pci_addr, size);
-		if (ret)
-			goto err;
-
-		set_bit(free_win, ep->ib_window_map);
-		indexes[i] = free_win;
-		ep_func->num_ib_atu_indexes[bar] = i + 1;
-	}
-	return 0;
-err:
-	dw_pcie_ep_clear_ib_maps(ep, func_no, bar);
-	return ret;
-}
-
->>>>>>> hardened/6.19
 static int dw_pcie_ep_outbound_atu(struct dw_pcie_ep *ep,
 				   struct dw_pcie_ob_atu_cfg *atu)
 {
@@ -1283,7 +1101,6 @@ static void dw_pcie_ep_init_rebar_registers(struct dw_pcie_ep *ep, u8 func_no)
 			else
 				val = BIT(4);
 
-<<<<<<< HEAD
 			dw_pcie_ep_writel_dbi(ep, func_no, offset + PCI_REBAR_CAP, val);
 		}
 	}
@@ -1325,11 +1142,6 @@ static void dw_pcie_ep_init_non_sticky_registers(struct dw_pcie *pci)
 				     &lnkcap, func0_lnkcap);
 			dw_pcie_ep_writel_dbi(ep, func_no,
 					      offset + PCI_EXP_LNKCAP, lnkcap);
-||||||| 05f7e89ab9731
-			dw_pcie_writel_dbi(pci, offset + PCI_REBAR_CAP, val);
-=======
-			dw_pcie_ep_writel_dbi(ep, func_no, offset + PCI_REBAR_CAP, val);
->>>>>>> hardened/6.19
 		}
 	}
 }

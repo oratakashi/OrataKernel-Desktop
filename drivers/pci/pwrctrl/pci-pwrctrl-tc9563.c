@@ -557,16 +557,8 @@ static int tc9563_pwrctrl_probe(struct platform_device *pdev)
 	tc9563->client = i2c_new_dummy_device(tc9563->adapter, addr);
 	if (IS_ERR(tc9563->client)) {
 		dev_err(dev, "Failed to create I2C client\n");
-<<<<<<< HEAD
 		put_device(&tc9563->adapter->dev);
 		return PTR_ERR(tc9563->client);
-||||||| 05f7e89ab9731
-		i2c_put_adapter(ctx->adapter);
-		return PTR_ERR(ctx->client);
-=======
-		put_device(&ctx->adapter->dev);
-		return PTR_ERR(ctx->client);
->>>>>>> hardened/6.19
 	}
 
 	for (int i = 0; i < ARRAY_SIZE(tc9563_supply_names); i++)
@@ -632,16 +624,8 @@ static int tc9563_pwrctrl_probe(struct platform_device *pdev)
 power_off:
 	tc9563_pwrctrl_power_off(&tc9563->pwrctrl);
 remove_i2c:
-<<<<<<< HEAD
 	i2c_unregister_device(tc9563->client);
 	put_device(&tc9563->adapter->dev);
-||||||| 05f7e89ab9731
-	i2c_unregister_device(ctx->client);
-	i2c_put_adapter(ctx->adapter);
-=======
-	i2c_unregister_device(ctx->client);
-	put_device(&ctx->adapter->dev);
->>>>>>> hardened/6.19
 	return ret;
 }
 
@@ -651,19 +635,9 @@ static void tc9563_pwrctrl_remove(struct platform_device *pdev)
 	struct tc9563_pwrctrl *tc9563 = container_of(pwrctrl,
 					struct tc9563_pwrctrl, pwrctrl);
 
-<<<<<<< HEAD
 	tc9563_pwrctrl_power_off(&tc9563->pwrctrl);
 	i2c_unregister_device(tc9563->client);
 	put_device(&tc9563->adapter->dev);
-||||||| 05f7e89ab9731
-	tc9563_pwrctrl_power_off(ctx);
-	i2c_unregister_device(ctx->client);
-	i2c_put_adapter(ctx->adapter);
-=======
-	tc9563_pwrctrl_power_off(ctx);
-	i2c_unregister_device(ctx->client);
-	put_device(&ctx->adapter->dev);
->>>>>>> hardened/6.19
 }
 
 static const struct of_device_id tc9563_pwrctrl_of_match[] = {

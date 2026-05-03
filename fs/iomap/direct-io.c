@@ -536,27 +536,11 @@ static int iomap_dio_bio_iter(struct iomap_iter *iter, struct iomap_dio *dio)
 	}
 
 	do {
-<<<<<<< HEAD
 		/*
 		 * If completions already occurred and reported errors, give up now and
 		 * don't bother submitting more bios.
 		 */
 		if (unlikely(data_race(dio->error)))
-||||||| 05f7e89ab9731
-		size_t n;
-		if (dio->error) {
-			iov_iter_revert(dio->submit.iter, copied);
-			copied = ret = 0;
-=======
-		size_t n;
-
-		/*
-		 * If completions already occurred and reported errors, give up now and
-		 * don't bother submitting more bios.
-		 */
-		if (unlikely(data_race(dio->error))) {
-			ret = 0;
->>>>>>> hardened/6.19
 			goto out;
 
 		ret = iomap_dio_bio_iter_one(iter, dio, pos, alignment, bio_opf);

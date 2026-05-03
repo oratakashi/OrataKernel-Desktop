@@ -228,7 +228,6 @@ int devm_clk_rate_exclusive_get(struct device *dev, struct clk *clk);
  */
 void clk_rate_exclusive_put(struct clk *clk);
 
-<<<<<<< HEAD
 /**
  * clk_save_context - save clock context for poweroff
  *
@@ -247,28 +246,6 @@ int clk_save_context(void);
 void clk_restore_context(void);
 
 #else /* !CONFIG_COMMON_CLK */
-||||||| 05f7e89ab9731
-#else
-=======
-/**
- * clk_save_context - save clock context for poweroff
- *
- * Saves the context of the clock register for powerstates in which the
- * contents of the registers will be lost. Occurs deep within the suspend
- * code so locking is not necessary.
- */
-int clk_save_context(void);
-
-/**
- * clk_restore_context - restore clock context after poweroff
- *
- * This occurs with all clocks enabled. Occurs deep within the resume code
- * so locking is not necessary.
- */
-void clk_restore_context(void);
-
-#else
->>>>>>> hardened/6.19
 
 static inline int clk_notifier_register(struct clk *clk,
 					struct notifier_block *nb)
@@ -333,7 +310,6 @@ static inline int devm_clk_rate_exclusive_get(struct device *dev, struct clk *cl
 
 static inline void clk_rate_exclusive_put(struct clk *clk) {}
 
-<<<<<<< HEAD
 static inline int clk_save_context(void)
 {
 	return 0;
@@ -342,18 +318,6 @@ static inline int clk_save_context(void)
 static inline void clk_restore_context(void) {}
 
 #endif /* !CONFIG_COMMON_CLK */
-||||||| 05f7e89ab9731
-#endif
-=======
-static inline int clk_save_context(void)
-{
-	return 0;
-}
-
-static inline void clk_restore_context(void) {}
-
-#endif
->>>>>>> hardened/6.19
 
 #ifdef CONFIG_HAVE_CLK_PREPARE
 /**
@@ -1195,20 +1159,7 @@ static inline struct clk *clk_get_sys(const char *dev_id, const char *con_id)
 	return NULL;
 }
 
-<<<<<<< HEAD
 #endif /* !CONFIG_HAVE_CLK */
-||||||| 05f7e89ab9731
-static inline int clk_save_context(void)
-{
-	return 0;
-}
-
-static inline void clk_restore_context(void) {}
-
-#endif
-=======
-#endif
->>>>>>> hardened/6.19
 
 /* clk_prepare_enable helps cases using clk_enable in non-atomic context. */
 static inline int clk_prepare_enable(struct clk *clk)

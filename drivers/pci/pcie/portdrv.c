@@ -568,18 +568,8 @@ static void pcie_port_bus_remove(struct device *dev)
 	driver = to_service_driver(dev->driver);
 	if (driver && driver->remove)
 		driver->remove(pciedev);
-<<<<<<< HEAD
 
 	put_device(dev);
-||||||| 05f7e89ab9731
-		put_device(dev);
-	}
-	return 0;
-=======
-
-	put_device(dev);
-	return 0;
->>>>>>> hardened/6.19
 }
 
 const struct bus_type pcie_port_bus_type = {

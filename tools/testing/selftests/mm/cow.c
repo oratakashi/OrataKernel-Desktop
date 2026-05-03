@@ -1626,19 +1626,11 @@ static void run_with_huge_zeropage(non_anon_test_fn fn, const char *desc)
 	 * the first sub-page and test if we get another sub-page populated
 	 * automatically.
 	 */
-<<<<<<< HEAD
 	if (!populate_page_checked(mem) || !populate_page_checked(smem)) {
 		log_test_result(KSFT_FAIL);
 		goto munmap;
 	}
 
-||||||| 05f7e89ab9731
-	FORCE_READ(mem);
-	FORCE_READ(smem);
-=======
-	FORCE_READ(*mem);
-	FORCE_READ(*smem);
->>>>>>> hardened/6.19
 	if (!pagemap_is_populated(pagemap_fd, mem + pagesize) ||
 	    !pagemap_is_populated(pagemap_fd, smem + pagesize)) {
 		ksft_test_result_skip("Did not get THPs populated\n");
@@ -1688,18 +1680,10 @@ static void run_with_memfd(non_anon_test_fn fn, const char *desc)
 	}
 
 	/* Fault the page in. */
-<<<<<<< HEAD
 	if (!populate_page_checked(mem) || !populate_page_checked(smem)) {
 		log_test_result(KSFT_FAIL);
 		goto munmap;
 	}
-||||||| 05f7e89ab9731
-	FORCE_READ(mem);
-	FORCE_READ(smem);
-=======
-	FORCE_READ(*mem);
-	FORCE_READ(*smem);
->>>>>>> hardened/6.19
 
 	fn(mem, smem, pagesize);
 munmap:
@@ -1754,18 +1738,10 @@ static void run_with_tmpfile(non_anon_test_fn fn, const char *desc)
 	}
 
 	/* Fault the page in. */
-<<<<<<< HEAD
 	if (!populate_page_checked(mem) || !populate_page_checked(smem)) {
 		log_test_result(KSFT_FAIL);
 		goto munmap;
 	}
-||||||| 05f7e89ab9731
-	FORCE_READ(mem);
-	FORCE_READ(smem);
-=======
-	FORCE_READ(*mem);
-	FORCE_READ(*smem);
->>>>>>> hardened/6.19
 
 	fn(mem, smem, pagesize);
 munmap:
@@ -1818,18 +1794,10 @@ static void run_with_memfd_hugetlb(non_anon_test_fn fn, const char *desc,
 	}
 
 	/* Fault the page in. */
-<<<<<<< HEAD
 	if (!populate_page_checked(mem) || !populate_page_checked(smem)) {
 		log_test_result(KSFT_FAIL);
 		goto munmap;
 	}
-||||||| 05f7e89ab9731
-	FORCE_READ(mem);
-	FORCE_READ(smem);
-=======
-	FORCE_READ(*mem);
-	FORCE_READ(*smem);
->>>>>>> hardened/6.19
 
 	fn(mem, smem, hugetlbsize);
 munmap:

@@ -3245,22 +3245,12 @@ struct spi_controller *__spi_alloc_controller(struct device *dev,
 	if (!ctlr)
 		return NULL;
 
-<<<<<<< HEAD
 	ctlr->pcpu_statistics = spi_alloc_pcpu_stats();
 	if (!ctlr->pcpu_statistics) {
 		kfree(ctlr);
 		return NULL;
 	}
 
-||||||| 05f7e89ab9731
-=======
-	ctlr->pcpu_statistics = spi_alloc_pcpu_stats(NULL);
-	if (!ctlr->pcpu_statistics) {
-		kfree(ctlr);
-		return NULL;
-	}
-
->>>>>>> hardened/6.19
 	device_initialize(&ctlr->dev);
 	INIT_LIST_HEAD(&ctlr->queue);
 	spin_lock_init(&ctlr->queue_lock);

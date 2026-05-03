@@ -811,7 +811,6 @@ static void airoha_qdma_cleanup_rx_queue(struct airoha_queue *q)
 		q->tail = (q->tail + 1) % q->ndesc;
 		q->queued--;
 	}
-<<<<<<< HEAD
 
 	q->head = q->tail;
 	/* Set RX_DMA_IDX to RX_CPU_IDX to notify the hw the QDMA RX ring is
@@ -821,13 +820,6 @@ static void airoha_qdma_cleanup_rx_queue(struct airoha_queue *q)
 			FIELD_PREP(RX_RING_CPU_IDX_MASK, q->head));
 	airoha_qdma_rmw(qdma, REG_RX_DMA_IDX(qid), RX_RING_DMA_IDX_MASK,
 			FIELD_PREP(RX_RING_DMA_IDX_MASK, q->tail));
-||||||| 05f7e89ab9731
-=======
-
-	q->head = q->tail;
-	airoha_qdma_rmw(qdma, REG_RX_DMA_IDX(qid), RX_RING_DMA_IDX_MASK,
-			FIELD_PREP(RX_RING_DMA_IDX_MASK, q->tail));
->>>>>>> hardened/6.19
 }
 
 static int airoha_qdma_init_rx(struct airoha_qdma *qdma)

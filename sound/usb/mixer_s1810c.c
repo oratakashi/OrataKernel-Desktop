@@ -85,7 +85,6 @@
  * (as a union?) with the longer struct s1810c_state_packet
  */
 struct s1810c_ctl_packet {
-<<<<<<< HEAD
 	__le32 selector;
 	__le32 b;
 	__le32 tag;
@@ -93,23 +92,6 @@ struct s1810c_ctl_packet {
 	__le32 c;
 	__le32 d;
 	__le32 e;
-||||||| 05f7e89ab9731
-	u32 a;
-	u32 b;
-	u32 fixed1;
-	u32 fixed2;
-	u32 c;
-	u32 d;
-	u32 e;
-=======
-	__le32 a;
-	__le32 b;
-	__le32 fixed1;
-	__le32 fixed2;
-	__le32 c;
-	__le32 d;
-	__le32 e;
->>>>>>> hardened/6.19
 };
 
 /* selectors for CMD request
@@ -197,36 +179,14 @@ snd_s1810c_send_ctl_packet(struct usb_device *dev, u32 sel,
 	struct s1810c_ctl_packet pkt = { 0 };
 	int ret = 0;
 
-<<<<<<< HEAD
 	pkt.tag = __cpu_to_le32(SC1810C_CMD_TAG);
 	pkt.len = __cpu_to_le32(SC1810C_CMD_LEN);
-||||||| 05f7e89ab9731
-	pkt.fixed1 = SC1810C_CMD_F1;
-	pkt.fixed2 = SC1810C_CMD_F2;
-=======
-	pkt.fixed1 = __cpu_to_le32(SC1810C_CMD_F1);
-	pkt.fixed2 = __cpu_to_le32(SC1810C_CMD_F2);
->>>>>>> hardened/6.19
 
-<<<<<<< HEAD
 	pkt.selector = __cpu_to_le32(sel);
 	pkt.b = __cpu_to_le32(b);
 	pkt.c = __cpu_to_le32(c);
 	pkt.d = __cpu_to_le32(d);
 	pkt.e = __cpu_to_le32(e);
-||||||| 05f7e89ab9731
-	pkt.a = a;
-	pkt.b = b;
-	pkt.c = c;
-	pkt.d = d;
-	pkt.e = e;
-=======
-	pkt.a = __cpu_to_le32(a);
-	pkt.b = __cpu_to_le32(b);
-	pkt.c = __cpu_to_le32(c);
-	pkt.d = __cpu_to_le32(d);
-	pkt.e = __cpu_to_le32(e);
->>>>>>> hardened/6.19
 
 	ret = snd_usb_ctl_msg(dev, usb_sndctrlpipe(dev, 0),
 			      SC1810C_CMD_REQ,
@@ -255,16 +215,8 @@ snd_sc1810c_get_status_field(struct usb_device *dev,
 	struct s1810c_state_packet pkt_in = { { 0 } };
 	int ret = 0;
 
-<<<<<<< HEAD
 	pkt_out.fields[SC1810C_STATE_TAG_IDX] = __cpu_to_le32(SC1810C_SET_STATE_TAG);
 	pkt_out.fields[SC1810C_STATE_LEN_IDX] = __cpu_to_le32(SC1810C_SET_STATE_LEN);
-||||||| 05f7e89ab9731
-	pkt_out.fields[SC1810C_STATE_F1_IDX] = SC1810C_SET_STATE_F1;
-	pkt_out.fields[SC1810C_STATE_F2_IDX] = SC1810C_SET_STATE_F2;
-=======
-	pkt_out.fields[SC1810C_STATE_F1_IDX] = __cpu_to_le32(SC1810C_SET_STATE_F1);
-	pkt_out.fields[SC1810C_STATE_F2_IDX] = __cpu_to_le32(SC1810C_SET_STATE_F2);
->>>>>>> hardened/6.19
 	ret = snd_usb_ctl_msg(dev, usb_sndctrlpipe(dev, 0),
 			      SC1810C_SET_STATE_REQ,
 			      SC1810C_SET_STATE_REQTYPE,

@@ -1641,18 +1641,8 @@ delete_item:
 	if (ret < 0 && ret != -ENOENT)
 		return ret;
 	ret2 = del_qgroup_relation_item(trans, dst, src);
-<<<<<<< HEAD
 	if (ret2 < 0 && ret2 != -ENOENT)
 		return ret2;
-||||||| 05f7e89ab9731
-	if (ret2 < 0 && ret2 != -ENOENT)
-		goto out;
-=======
-	if (ret2 < 0 && ret2 != -ENOENT) {
-		ret = ret2;
-		goto out;
-	}
->>>>>>> hardened/6.19
 
 	/* At least one deletion succeeded, return 0 */
 	if (!ret || !ret2)

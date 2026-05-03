@@ -2695,16 +2695,8 @@ restore_flag:
 
 static int f2fs_enable_checkpoint(struct f2fs_sb_info *sbi)
 {
-<<<<<<< HEAD
 	int retry = MAX_FLUSH_RETRY_COUNT;
 	long long start, writeback, end;
-||||||| 05f7e89ab9731
-	unsigned int nr_pages = get_pages(sbi, F2FS_DIRTY_DATA) / 16;
-	long long start, writeback, lock, sync_inode, end;
-=======
-	unsigned int nr_pages = get_pages(sbi, F2FS_DIRTY_DATA) / 16;
-	long long start, writeback, end;
->>>>>>> hardened/6.19
 	int ret;
 	struct f2fs_lock_context lc;
 	long long skipped_write, dirty_data;
@@ -2747,7 +2739,6 @@ static int f2fs_enable_checkpoint(struct f2fs_sb_info *sbi)
 
 	writeback = ktime_get();
 
-<<<<<<< HEAD
 	if (unlikely(get_pages(sbi, F2FS_DIRTY_DATA) ||
 			get_pages(sbi, F2FS_SKIPPED_WRITE)))
 		f2fs_warn(sbi, "checkpoint=enable unwritten data: %lld, skipped data: %lld, retry: %d",
@@ -2758,30 +2749,6 @@ static int f2fs_enable_checkpoint(struct f2fs_sb_info *sbi)
 		atomic_set(&sbi->nr_pages[F2FS_SKIPPED_WRITE], 0);
 
 	f2fs_down_write_trace(&sbi->gc_lock, &lc);
-||||||| 05f7e89ab9731
-	f2fs_down_write(&sbi->cp_enable_rwsem);
-
-	lock = ktime_get();
-
-	if (get_pages(sbi, F2FS_DIRTY_DATA))
-		sync_inodes_sb(sbi->sb);
-
-	if (unlikely(get_pages(sbi, F2FS_DIRTY_DATA)))
-		f2fs_warn(sbi, "%s: has some unwritten data: %lld",
-			__func__, get_pages(sbi, F2FS_DIRTY_DATA));
-
-	sync_inode = ktime_get();
-
-	f2fs_down_write(&sbi->gc_lock);
-=======
-	sync_inodes_sb(sbi->sb);
-
-	if (unlikely(get_pages(sbi, F2FS_DIRTY_DATA)))
-		f2fs_warn(sbi, "checkpoint=enable has some unwritten data: %lld",
-					get_pages(sbi, F2FS_DIRTY_DATA));
-
-	f2fs_down_write(&sbi->gc_lock);
->>>>>>> hardened/6.19
 	f2fs_dirty_to_prefree(sbi);
 
 	clear_sbi_flag(sbi, SBI_CP_DISABLED);
@@ -5028,14 +4995,7 @@ try_onemore:
 	init_f2fs_rwsem_trace(&sbi->node_write, sbi, LOCK_NAME_NODE_WRITE);
 	init_f2fs_rwsem_trace(&sbi->node_change, sbi, LOCK_NAME_NODE_CHANGE);
 	spin_lock_init(&sbi->stat_lock);
-<<<<<<< HEAD
 	init_f2fs_rwsem_trace(&sbi->cp_rwsem, sbi, LOCK_NAME_CP_RWSEM);
-||||||| 05f7e89ab9731
-	init_f2fs_rwsem(&sbi->cp_rwsem);
-	init_f2fs_rwsem(&sbi->cp_enable_rwsem);
-=======
-	init_f2fs_rwsem(&sbi->cp_rwsem);
->>>>>>> hardened/6.19
 	init_f2fs_rwsem(&sbi->quota_sem);
 	init_waitqueue_head(&sbi->cp_wait);
 	spin_lock_init(&sbi->error_lock);

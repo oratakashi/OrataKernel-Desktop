@@ -615,16 +615,9 @@ static long isst_if_core_power_state(void __user *argp)
 		return -EINVAL;
 
 	if (core_power.get_set) {
-<<<<<<< HEAD
 		if (power_domain_info->write_blocked || !capable(CAP_SYS_ADMIN))
 			return -EPERM;
 
-||||||| 05f7e89ab9731
-=======
-		if (power_domain_info->write_blocked)
-			return -EPERM;
-
->>>>>>> hardened/6.19
 		_write_cp_info("cp_enable", core_power.enable, SST_CP_CONTROL_OFFSET,
 			       SST_CP_ENABLE_START, SST_CP_ENABLE_WIDTH, SST_MUL_FACTOR_NONE)
 		_write_cp_info("cp_prio_type", core_power.priority_type, SST_CP_CONTROL_OFFSET,
@@ -1756,22 +1749,9 @@ void tpmi_sst_dev_suspend(struct auxiliary_device *auxdev)
 		if (!pd_info || !pd_info->sst_base)
 			continue;
 
-<<<<<<< HEAD
 		if (!(pd_info->sst_header.cap_mask & SST_PP_CAP_CP_ENABLE))
 			goto process_pp_suspend;
-||||||| 05f7e89ab9731
-	memcpy_fromio(power_domain_info->saved_clos_configs, cp_base + SST_CLOS_CONFIG_0_OFFSET,
-		      sizeof(power_domain_info->saved_clos_configs));
-=======
-		cp_base = pd_info->sst_base + pd_info->sst_header.cp_offset;
-		pd_info->saved_sst_cp_control = readq(cp_base + SST_CP_CONTROL_OFFSET);
-		memcpy_fromio(pd_info->saved_clos_configs, cp_base + SST_CLOS_CONFIG_0_OFFSET,
-			      sizeof(pd_info->saved_clos_configs));
-		memcpy_fromio(pd_info->saved_clos_assocs, cp_base + SST_CLOS_ASSOC_0_OFFSET,
-			      sizeof(pd_info->saved_clos_assocs));
->>>>>>> hardened/6.19
 
-<<<<<<< HEAD
 		cp_base = pd_info->sst_base + pd_info->sst_header.cp_offset;
 		pd_info->saved_sst_cp_control = readq(cp_base + SST_CP_CONTROL_OFFSET);
 		memcpy_fromio(pd_info->saved_clos_configs, cp_base + SST_CLOS_CONFIG_0_OFFSET,
@@ -1787,19 +1767,6 @@ process_pp_suspend:
 						  pd_info->sst_header.pp_offset +
 						  SST_PP_CONTROL_OFFSET);
 	}
-||||||| 05f7e89ab9731
-	memcpy_fromio(power_domain_info->saved_clos_assocs, cp_base + SST_CLOS_ASSOC_0_OFFSET,
-		      sizeof(power_domain_info->saved_clos_assocs));
-
-	power_domain_info->saved_pp_control = readq(power_domain_info->sst_base +
-						    power_domain_info->sst_header.pp_offset +
-						    SST_PP_CONTROL_OFFSET);
-=======
-		pd_info->saved_pp_control = readq(pd_info->sst_base +
-						  pd_info->sst_header.pp_offset +
-						  SST_PP_CONTROL_OFFSET);
-	}
->>>>>>> hardened/6.19
 }
 EXPORT_SYMBOL_NS_GPL(tpmi_sst_dev_suspend, "INTEL_TPMI_SST");
 
@@ -1823,22 +1790,9 @@ void tpmi_sst_dev_resume(struct auxiliary_device *auxdev)
 		if (!pd_info || !pd_info->sst_base)
 			continue;
 
-<<<<<<< HEAD
 		if (!(pd_info->sst_header.cap_mask & SST_PP_CAP_CP_ENABLE))
 			goto process_pp_resume;
-||||||| 05f7e89ab9731
-	memcpy_toio(cp_base + SST_CLOS_CONFIG_0_OFFSET, power_domain_info->saved_clos_configs,
-		    sizeof(power_domain_info->saved_clos_configs));
-=======
-		cp_base = pd_info->sst_base + pd_info->sst_header.cp_offset;
-		writeq(pd_info->saved_sst_cp_control, cp_base + SST_CP_CONTROL_OFFSET);
-		memcpy_toio(cp_base + SST_CLOS_CONFIG_0_OFFSET, pd_info->saved_clos_configs,
-			    sizeof(pd_info->saved_clos_configs));
-		memcpy_toio(cp_base + SST_CLOS_ASSOC_0_OFFSET, pd_info->saved_clos_assocs,
-			    sizeof(pd_info->saved_clos_assocs));
->>>>>>> hardened/6.19
 
-<<<<<<< HEAD
 		cp_base = pd_info->sst_base + pd_info->sst_header.cp_offset;
 		writeq(pd_info->saved_sst_cp_control, cp_base + SST_CP_CONTROL_OFFSET);
 		memcpy_toio(cp_base + SST_CLOS_CONFIG_0_OFFSET, pd_info->saved_clos_configs,
@@ -1853,17 +1807,6 @@ process_pp_resume:
 		writeq(pd_info->saved_pp_control, power_domain_info->sst_base +
 		       pd_info->sst_header.pp_offset + SST_PP_CONTROL_OFFSET);
 	}
-||||||| 05f7e89ab9731
-	memcpy_toio(cp_base + SST_CLOS_ASSOC_0_OFFSET, power_domain_info->saved_clos_assocs,
-		    sizeof(power_domain_info->saved_clos_assocs));
-
-	writeq(power_domain_info->saved_pp_control, power_domain_info->sst_base +
-				power_domain_info->sst_header.pp_offset + SST_PP_CONTROL_OFFSET);
-=======
-		writeq(pd_info->saved_pp_control, power_domain_info->sst_base +
-		       pd_info->sst_header.pp_offset + SST_PP_CONTROL_OFFSET);
-	}
->>>>>>> hardened/6.19
 }
 EXPORT_SYMBOL_NS_GPL(tpmi_sst_dev_resume, "INTEL_TPMI_SST");
 

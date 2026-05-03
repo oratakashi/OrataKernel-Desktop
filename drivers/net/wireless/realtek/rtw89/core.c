@@ -1369,15 +1369,7 @@ static int rtw89_core_tx_write_link(struct rtw89_dev *rtwdev,
 	tx_req.sta = sta;
 	tx_req.rtwvif_link = rtwvif_link;
 	tx_req.rtwsta_link = rtwsta_link;
-<<<<<<< HEAD
 	tx_req.with_wait = !!wait;
-||||||| 05f7e89ab9731
-	tx_req.desc_info.sw_mld = sw_mld;
-	rcu_assign_pointer(skb_data->wait, wait);
-=======
-	tx_req.desc_info.sw_mld = sw_mld;
-	tx_req.with_wait = !!wait;
->>>>>>> hardened/6.19
 
 	rtw89_traffic_stats_accu(rtwdev, rtwvif, skb, true, true);
 	rtw89_wow_parse_akm(rtwdev, skb);
