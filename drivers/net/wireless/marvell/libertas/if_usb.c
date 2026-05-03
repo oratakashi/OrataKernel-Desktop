@@ -425,6 +425,7 @@ static int usb_tx_block(struct if_usb_card *cardp, uint8_t *payload, uint16_t nb
 		goto tx_ret;
 	}
 
+<<<<<<< HEAD
 	/* check if there are pending URBs */
 	if (!usb_anchor_empty(&cardp->tx_submitted)) {
 		lbs_deb_usbd(&cardp->udev->dev, "%s failed: pending URB\n", __func__);
@@ -432,6 +433,11 @@ static int usb_tx_block(struct if_usb_card *cardp, uint8_t *payload, uint16_t nb
 		goto tx_ret;
 	}
 
+||||||| 05f7e89ab9731
+=======
+	usb_kill_urb(cardp->tx_urb);
+
+>>>>>>> hardened/6.19
 	usb_fill_bulk_urb(cardp->tx_urb, cardp->udev,
 			  usb_sndbulkpipe(cardp->udev,
 					  cardp->ep_out),

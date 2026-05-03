@@ -55,7 +55,14 @@ static int virtio_pmem_flush(struct nd_region *nd_region)
 		return -EIO;
 	}
 
+<<<<<<< HEAD
 	req_data = kmalloc_obj(*req_data);
+||||||| 05f7e89ab9731
+	might_sleep();
+	req_data = kmalloc(sizeof(*req_data), GFP_KERNEL);
+=======
+	req_data = kmalloc(sizeof(*req_data), GFP_KERNEL);
+>>>>>>> hardened/6.19
 	if (!req_data)
 		return -ENOMEM;
 

@@ -161,8 +161,16 @@ static int entry(u64 ip, struct unwind_info *ui)
 	}
 
 	e->ip	  = ip;
+<<<<<<< HEAD
 	e->ms.thread = thread__get(al.thread);
 	e->ms.map = map__get(al.map);
+||||||| 05f7e89ab9731
+	e->ms.maps = al.maps;
+	e->ms.map = al.map;
+=======
+	e->ms.maps = maps__get(al.maps);
+	e->ms.map = map__get(al.map);
+>>>>>>> hardened/6.19
 	e->ms.sym = al.sym;
 
 	pr_debug("unwind: %s:ip = 0x%" PRIx64 " (0x%" PRIx64 ")\n",
@@ -426,10 +434,19 @@ int unwind__get_entries(unwind_entry_cb_t cb, void *arg,
 	if (err)
 		pr_debug("unwind: failed with '%s'\n", dwfl_errmsg(-1));
 
+<<<<<<< HEAD
 	for (i = 0; i < ui->idx; i++)
 		map_symbol__exit(&ui->entries[i].ms);
 
 	dwfl_ui_ti->ui = NULL;
+||||||| 05f7e89ab9731
+	dwfl_end(ui->dwfl);
+=======
+	for (i = 0; i < ui->idx; i++)
+		map_symbol__exit(&ui->entries[i].ms);
+
+	dwfl_end(ui->dwfl);
+>>>>>>> hardened/6.19
 	free(ui);
 	return 0;
 }

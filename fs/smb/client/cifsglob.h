@@ -2344,6 +2344,7 @@ static inline void cifs_requeue_server_reconn(struct TCP_Server_Info *server)
 	queue_delayed_work(cifsiod_wq, &server->reconnect, delay * HZ);
 }
 
+<<<<<<< HEAD
 static inline bool __cifs_cache_state_check(struct cifsInodeInfo *cinode,
 					    unsigned int oplock_flags,
 					    unsigned int sb_flags)
@@ -2392,4 +2393,23 @@ static inline int cifs_open_create_options(unsigned int oflags, int opts)
  */
 #define CIFS_INO_BLOCKS(size) DIV_ROUND_UP_ULL((u64)(size), 512)
 
+||||||| 05f7e89ab9731
+=======
+static inline int cifs_open_create_options(unsigned int oflags, int opts)
+{
+	/* O_SYNC also has bit for O_DSYNC so following check picks up either */
+	if (oflags & O_SYNC)
+		opts |= CREATE_WRITE_THROUGH;
+	if (oflags & O_DIRECT)
+		opts |= CREATE_NO_BUFFER;
+	return opts;
+}
+
+/*
+ * The number of blocks is not related to (i_size / i_blksize), but instead
+ * 512 byte (2**9) size is required for calculating num blocks.
+ */
+#define CIFS_INO_BLOCKS(size) DIV_ROUND_UP_ULL((u64)(size), 512)
+
+>>>>>>> hardened/6.19
 #endif	/* _CIFS_GLOB_H */

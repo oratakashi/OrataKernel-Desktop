@@ -216,10 +216,111 @@ static const struct mpfs_syscon_config mpfs_config = {
 	.subdevs = mpfs_subdevs,
 };
 
+<<<<<<< HEAD
 static const struct mpfs_syscon_config pic64gx_config = {
 	.nb_subdevs = ARRAY_SIZE(pic64gx_subdevs),
 	.subdevs = pic64gx_subdevs,
 };
+||||||| 05f7e89ab9731
+	np = of_parse_phandle(dev->of_node, "microchip,bitstream-flash", 0);
+	if (!np)
+		goto no_flash;
+
+	sys_controller->flash = of_get_mtd_device_by_node(np);
+	of_node_put(np);
+	if (IS_ERR(sys_controller->flash))
+		return dev_err_probe(dev, PTR_ERR(sys_controller->flash), "Failed to get flash\n");
+
+no_flash:
+	sys_controller->client.dev = dev;
+	sys_controller->client.rx_callback = mpfs_sys_controller_rx_callback;
+	sys_controller->client.tx_block = 1U;
+	sys_controller->client.tx_tout = msecs_to_jiffies(MPFS_SYS_CTRL_TIMEOUT_MS);
+
+	sys_controller->chan = mbox_request_channel(&sys_controller->client, 0);
+	if (IS_ERR(sys_controller->chan)) {
+		ret = dev_err_probe(dev, PTR_ERR(sys_controller->chan),
+				    "Failed to get mbox channel\n");
+		kfree(sys_controller);
+		return ret;
+	}
+
+	init_completion(&sys_controller->c);
+	kref_init(&sys_controller->consumers);
+
+	platform_set_drvdata(pdev, sys_controller);
+
+
+	for (i = 0; i < ARRAY_SIZE(subdevs); i++) {
+		subdevs[i].dev.parent = dev;
+		if (platform_device_register(&subdevs[i]))
+			dev_warn(dev, "Error registering sub device %s\n", subdevs[i].name);
+	}
+
+	dev_info(&pdev->dev, "Registered MPFS system controller\n");
+
+	return 0;
+}
+
+static void mpfs_sys_controller_remove(struct platform_device *pdev)
+{
+	struct mpfs_sys_controller *sys_controller = platform_get_drvdata(pdev);
+
+	mpfs_sys_controller_put(sys_controller);
+}
+=======
+	np = of_parse_phandle(dev->of_node, "microchip,bitstream-flash", 0);
+	if (!np)
+		goto no_flash;
+
+	sys_controller->flash = of_get_mtd_device_by_node(np);
+	of_node_put(np);
+	if (IS_ERR(sys_controller->flash)) {
+		ret = dev_err_probe(dev, PTR_ERR(sys_controller->flash), "Failed to get flash\n");
+		goto out_free;
+	}
+
+no_flash:
+	sys_controller->client.dev = dev;
+	sys_controller->client.rx_callback = mpfs_sys_controller_rx_callback;
+	sys_controller->client.tx_block = 1U;
+	sys_controller->client.tx_tout = msecs_to_jiffies(MPFS_SYS_CTRL_TIMEOUT_MS);
+
+	sys_controller->chan = mbox_request_channel(&sys_controller->client, 0);
+	if (IS_ERR(sys_controller->chan)) {
+		ret = dev_err_probe(dev, PTR_ERR(sys_controller->chan),
+				    "Failed to get mbox channel\n");
+		goto out_free;
+	}
+
+	init_completion(&sys_controller->c);
+	kref_init(&sys_controller->consumers);
+
+	platform_set_drvdata(pdev, sys_controller);
+
+
+	for (i = 0; i < ARRAY_SIZE(subdevs); i++) {
+		subdevs[i].dev.parent = dev;
+		if (platform_device_register(&subdevs[i]))
+			dev_warn(dev, "Error registering sub device %s\n", subdevs[i].name);
+	}
+
+	dev_info(&pdev->dev, "Registered MPFS system controller\n");
+
+	return 0;
+
+out_free:
+	kfree(sys_controller);
+	return ret;
+}
+
+static void mpfs_sys_controller_remove(struct platform_device *pdev)
+{
+	struct mpfs_sys_controller *sys_controller = platform_get_drvdata(pdev);
+
+	mpfs_sys_controller_put(sys_controller);
+}
+>>>>>>> hardened/6.19
 
 static const struct of_device_id mpfs_sys_controller_of_match[] = {
 	{.compatible = "microchip,mpfs-sys-controller", .data = &mpfs_config},

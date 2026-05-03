@@ -1879,6 +1879,75 @@ void thermal_pm_complete(void)
 		thermal_zone_pm_complete(tz);
 }
 
+<<<<<<< HEAD
+||||||| 05f7e89ab9731
+static int thermal_pm_notify(struct notifier_block *nb,
+			     unsigned long mode, void *_unused)
+{
+	switch (mode) {
+	case PM_HIBERNATION_PREPARE:
+	case PM_RESTORE_PREPARE:
+	case PM_SUSPEND_PREPARE:
+		thermal_pm_notify_prepare();
+		break;
+	case PM_POST_HIBERNATION:
+	case PM_POST_RESTORE:
+	case PM_POST_SUSPEND:
+		thermal_pm_notify_complete();
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
+
+static struct notifier_block thermal_pm_nb = {
+	.notifier_call = thermal_pm_notify,
+	/*
+	 * Run at the lowest priority to avoid interference between the thermal
+	 * zone resume work items spawned by thermal_pm_notify() and the other
+	 * PM notifiers.
+	 */
+	.priority = INT_MIN,
+};
+
+=======
+static int thermal_pm_notify(struct notifier_block *nb,
+			     unsigned long mode, void *_unused)
+{
+	switch (mode) {
+	case PM_HIBERNATION_PREPARE:
+	case PM_RESTORE_PREPARE:
+	case PM_SUSPEND_PREPARE:
+		thermal_pm_notify_prepare();
+		/*
+		 * Allow any leftover thermal work items already on the
+		 * worqueue to complete so they don't get in the way later.
+		 */
+		flush_workqueue(thermal_wq);
+		break;
+	case PM_POST_HIBERNATION:
+	case PM_POST_RESTORE:
+	case PM_POST_SUSPEND:
+		thermal_pm_notify_complete();
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
+
+static struct notifier_block thermal_pm_nb = {
+	.notifier_call = thermal_pm_notify,
+	/*
+	 * Run at the lowest priority to avoid interference between the thermal
+	 * zone resume work items spawned by thermal_pm_notify() and the other
+	 * PM notifiers.
+	 */
+	.priority = INT_MIN,
+};
+
+>>>>>>> hardened/6.19
 static int __init thermal_init(void)
 {
 	int result;
@@ -1889,12 +1958,23 @@ static int __init thermal_init(void)
 	if (result)
 		goto error;
 
+<<<<<<< HEAD
 	thermal_wq = alloc_workqueue("thermal_events", WQ_POWER_EFFICIENT, 0);
 	if (!thermal_wq) {
 		result = -ENOMEM;
 		goto unregister_netlink;
 	}
 
+||||||| 05f7e89ab9731
+=======
+	thermal_wq = alloc_workqueue("thermal_events",
+				      WQ_FREEZABLE | WQ_POWER_EFFICIENT | WQ_PERCPU, 0);
+	if (!thermal_wq) {
+		result = -ENOMEM;
+		goto unregister_netlink;
+	}
+
+>>>>>>> hardened/6.19
 	result = thermal_register_governors();
 	if (result)
 		goto destroy_workqueue;

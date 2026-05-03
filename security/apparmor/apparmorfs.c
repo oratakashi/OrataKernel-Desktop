@@ -365,6 +365,9 @@ static struct dentry *aafs_create(const char *name, umode_t mode,
 	if (data)
 		aa_get_common_ref(data);
 
+	if (data)
+		aa_get_common_ref(data);
+
 	return dentry;
 
 fail:

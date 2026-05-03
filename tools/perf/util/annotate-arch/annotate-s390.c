@@ -44,6 +44,16 @@ static int s390_call__parse(const struct arch *arch, struct ins_operands *ops,
 
 	if (ops->target.name == NULL)
 		return -1;
+<<<<<<< HEAD:tools/perf/util/annotate-arch/annotate-s390.c
+||||||| 05f7e89ab9731:tools/perf/arch/s390/annotate/instructions.c
+	target.addr = map__objdump_2mem(map, ops->target.addr);
+=======
+
+	target = (struct addr_map_symbol) {
+		.ms = { .map = map__get(map), },
+		.addr = map__objdump_2mem(map, ops->target.addr),
+	};
+>>>>>>> hardened/6.19:tools/perf/arch/s390/annotate/instructions.c
 
 	target = (struct addr_map_symbol) {
 		.ms = { .map = map__get(map), },

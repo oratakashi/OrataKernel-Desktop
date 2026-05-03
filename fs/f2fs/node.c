@@ -1775,12 +1775,23 @@ static bool __write_node_folio(struct folio *folio, bool atomic, bool do_fsync,
 
 	/* get old block addr of this node page */
 	nid = nid_of_node(folio);
+<<<<<<< HEAD
 
 	if (f2fs_sanity_check_node_footer(sbi, folio, nid,
 					NODE_TYPE_REGULAR, false)) {
 		f2fs_stop_checkpoint(sbi, false, STOP_CP_REASON_CORRUPTED_NID);
 		goto redirty_out;
 	}
+||||||| 05f7e89ab9731
+	f2fs_bug_on(sbi, folio->index != nid);
+=======
+
+	if (f2fs_sanity_check_node_footer(sbi, folio, nid,
+					NODE_TYPE_REGULAR, false)) {
+		f2fs_handle_critical_error(sbi, STOP_CP_REASON_CORRUPTED_NID);
+		goto redirty_out;
+	}
+>>>>>>> hardened/6.19
 
 	if (f2fs_get_node_info(sbi, nid, &ni, !do_balance))
 		goto redirty_out;
@@ -1803,8 +1814,13 @@ static bool __write_node_folio(struct folio *folio, bool atomic, bool do_fsync,
 		goto redirty_out;
 	}
 
-	if (atomic && !test_opt(sbi, NOBARRIER))
-		fio.op_flags |= REQ_PREFLUSH | REQ_FUA;
+	if (atomic) {
+		if (!test_opt(sbi, NOBARRIER))
+			fio.op_flags |= REQ_PREFLUSH | REQ_FUA;
+		if (IS_INODE(folio))
+			set_dentry_mark(folio,
+				f2fs_need_dentry_mark(sbi, ino_of_node(folio)));
+	}
 
 	set_dentry_mark(folio, false);
 	set_fsync_mark(folio, do_fsync);
@@ -1959,6 +1975,15 @@ continue_unlock:
 					if (is_inode_flag_set(inode,
 								FI_DIRTY_INODE))
 						f2fs_update_inode(inode, folio);
+<<<<<<< HEAD
+||||||| 05f7e89ab9731
+					set_dentry_mark(folio,
+						f2fs_need_dentry_mark(sbi, ino));
+=======
+					if (!atomic)
+						set_dentry_mark(folio,
+							f2fs_need_dentry_mark(sbi, ino));
+>>>>>>> hardened/6.19
 				}
 				/* may be written by other thread */
 				if (!folio_test_dirty(folio))
