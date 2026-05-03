@@ -650,7 +650,48 @@ static int f_ospi_probe(struct platform_device *pdev)
 	if (ret)
 		return ret;
 
+<<<<<<< HEAD
 	return devm_spi_register_controller(dev, ctlr);
+||||||| 05f7e89ab9731
+	ret = devm_spi_register_controller(dev, ctlr);
+	if (ret)
+		goto err_destroy_mutex;
+
+	return 0;
+
+err_destroy_mutex:
+	mutex_destroy(&ospi->mlock);
+
+err_put_ctlr:
+	spi_controller_put(ctlr);
+
+	return ret;
+}
+
+static void f_ospi_remove(struct platform_device *pdev)
+{
+	struct f_ospi *ospi = platform_get_drvdata(pdev);
+
+	mutex_destroy(&ospi->mlock);
+=======
+	ret = devm_spi_register_controller(dev, ctlr);
+	if (ret)
+		goto err_destroy_mutex;
+
+	return 0;
+
+err_destroy_mutex:
+	mutex_destroy(&ospi->mlock);
+
+	return ret;
+}
+
+static void f_ospi_remove(struct platform_device *pdev)
+{
+	struct f_ospi *ospi = platform_get_drvdata(pdev);
+
+	mutex_destroy(&ospi->mlock);
+>>>>>>> hardened/6.19
 }
 
 static const struct of_device_id f_ospi_dt_ids[] = {

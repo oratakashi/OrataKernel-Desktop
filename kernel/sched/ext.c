@@ -1557,6 +1557,7 @@ static void dispatch_enqueue(struct scx_sched *sch, struct rq *rq,
 	p->scx.dsq = dsq;
 
 	/*
+<<<<<<< HEAD
 	 * Update custody and call ops.dequeue() before clearing ops_state:
 	 * once ops_state is cleared, waiters in ops_dequeue() can proceed
 	 * and dequeue_task_scx() will RMW p->scx.flags. If we clear
@@ -1579,6 +1580,18 @@ static void dispatch_enqueue(struct scx_sched *sch, struct rq *rq,
 	}
 
 	/*
+||||||| 05f7e89ab9731
+	 * scx.ddsp_dsq_id and scx.ddsp_enq_flags are only relevant on the
+	 * direct dispatch path, but we clear them here because the direct
+	 * dispatch verdict may be overridden on the enqueue path during e.g.
+	 * bypass.
+	 */
+	p->scx.ddsp_dsq_id = SCX_DSQ_INVALID;
+	p->scx.ddsp_enq_flags = 0;
+
+	/*
+=======
+>>>>>>> hardened/6.19
 	 * We're transitioning out of QUEUEING or DISPATCHING. store_release to
 	 * match waiters' load_acquire.
 	 */
@@ -1763,8 +1776,15 @@ static void direct_dispatch(struct scx_sched *sch, struct task_struct *p,
 {
 	struct rq *rq = task_rq(p);
 	struct scx_dispatch_q *dsq =
+<<<<<<< HEAD
 		find_dsq_for_dispatch(sch, rq, p->scx.ddsp_dsq_id, task_cpu(p));
 	u64 ddsp_enq_flags;
+||||||| 05f7e89ab9731
+		find_dsq_for_dispatch(sch, rq, p->scx.ddsp_dsq_id, p);
+=======
+		find_dsq_for_dispatch(sch, rq, p->scx.ddsp_dsq_id, p);
+	u64 ddsp_enq_flags;
+>>>>>>> hardened/6.19
 
 	touch_core_sched_dispatch(rq, p);
 
@@ -1805,10 +1825,20 @@ static void direct_dispatch(struct scx_sched *sch, struct task_struct *p,
 		return;
 	}
 
+<<<<<<< HEAD
 	ddsp_enq_flags = p->scx.ddsp_enq_flags;
 	clear_direct_dispatch(p);
 
 	dispatch_enqueue(sch, rq, dsq, p, ddsp_enq_flags | SCX_ENQ_CLEAR_OPSS);
+||||||| 05f7e89ab9731
+	dispatch_enqueue(sch, dsq, p,
+			 p->scx.ddsp_enq_flags | SCX_ENQ_CLEAR_OPSS);
+=======
+	ddsp_enq_flags = p->scx.ddsp_enq_flags;
+	clear_direct_dispatch(p);
+
+	dispatch_enqueue(sch, dsq, p, ddsp_enq_flags | SCX_ENQ_CLEAR_OPSS);
+>>>>>>> hardened/6.19
 }
 
 static bool scx_rq_online(struct rq *rq)
@@ -1931,8 +1961,15 @@ enqueue:
 	 */
 	touch_core_sched(rq, p);
 	refill_task_slice_dfl(sch, p);
+<<<<<<< HEAD
 	clear_direct_dispatch(p);
 	dispatch_enqueue(sch, rq, dsq, p, enq_flags);
+||||||| 05f7e89ab9731
+	dispatch_enqueue(sch, dsq, p, enq_flags);
+=======
+	clear_direct_dispatch(p);
+	dispatch_enqueue(sch, dsq, p, enq_flags);
+>>>>>>> hardened/6.19
 }
 
 static bool task_runnable(const struct task_struct *p)
@@ -1972,6 +2009,18 @@ static void enqueue_task_scx(struct rq *rq, struct task_struct *p, int core_enq_
 	if (enq_flags & ENQUEUE_WAKEUP)
 		rq->scx.flags |= SCX_RQ_IN_WAKEUP;
 
+<<<<<<< HEAD
+||||||| 05f7e89ab9731
+	enq_flags |= rq->scx.extra_enq_flags;
+
+	if (sticky_cpu >= 0)
+		p->scx.sticky_cpu = -1;
+
+=======
+	if (sticky_cpu >= 0)
+		p->scx.sticky_cpu = -1;
+
+>>>>>>> hardened/6.19
 	/*
 	 * Restoring a running task will be immediately followed by
 	 * set_next_task_scx() which expects the task to not be on the BPF
@@ -2892,6 +2941,66 @@ has_tasks:
 	return true;
 }
 
+<<<<<<< HEAD
+||||||| 05f7e89ab9731
+static void process_ddsp_deferred_locals(struct rq *rq)
+{
+	struct task_struct *p;
+
+	lockdep_assert_rq_held(rq);
+
+	/*
+	 * Now that @rq can be unlocked, execute the deferred enqueueing of
+	 * tasks directly dispatched to the local DSQs of other CPUs. See
+	 * direct_dispatch(). Keep popping from the head instead of using
+	 * list_for_each_entry_safe() as dispatch_local_dsq() may unlock @rq
+	 * temporarily.
+	 */
+	while ((p = list_first_entry_or_null(&rq->scx.ddsp_deferred_locals,
+				struct task_struct, scx.dsq_list.node))) {
+		struct scx_sched *sch = scx_root;
+		struct scx_dispatch_q *dsq;
+
+		list_del_init(&p->scx.dsq_list.node);
+
+		dsq = find_dsq_for_dispatch(sch, rq, p->scx.ddsp_dsq_id, p);
+		if (!WARN_ON_ONCE(dsq->id != SCX_DSQ_LOCAL))
+			dispatch_to_local_dsq(sch, rq, dsq, p,
+					      p->scx.ddsp_enq_flags);
+	}
+}
+
+=======
+static void process_ddsp_deferred_locals(struct rq *rq)
+{
+	struct task_struct *p;
+
+	lockdep_assert_rq_held(rq);
+
+	/*
+	 * Now that @rq can be unlocked, execute the deferred enqueueing of
+	 * tasks directly dispatched to the local DSQs of other CPUs. See
+	 * direct_dispatch(). Keep popping from the head instead of using
+	 * list_for_each_entry_safe() as dispatch_local_dsq() may unlock @rq
+	 * temporarily.
+	 */
+	while ((p = list_first_entry_or_null(&rq->scx.ddsp_deferred_locals,
+				struct task_struct, scx.dsq_list.node))) {
+		struct scx_sched *sch = scx_root;
+		struct scx_dispatch_q *dsq;
+		u64 dsq_id = p->scx.ddsp_dsq_id;
+		u64 enq_flags = p->scx.ddsp_enq_flags;
+
+		list_del_init(&p->scx.dsq_list.node);
+		clear_direct_dispatch(p);
+
+		dsq = find_dsq_for_dispatch(sch, rq, dsq_id, p);
+		if (!WARN_ON_ONCE(dsq->id != SCX_DSQ_LOCAL))
+			dispatch_to_local_dsq(sch, rq, dsq, p, enq_flags);
+	}
+}
+
+>>>>>>> hardened/6.19
 static void set_next_task_scx(struct rq *rq, struct task_struct *p, bool first)
 {
 	struct scx_sched *sch = scx_task_sched(p);
@@ -5959,11 +6068,17 @@ static bool scx_claim_exit(struct scx_sched *sch, enum scx_exit_kind kind)
 {
 	int none = SCX_EXIT_NONE;
 
+<<<<<<< HEAD
 	lockdep_assert_preemption_disabled();
 
 	if (WARN_ON_ONCE(kind == SCX_EXIT_NONE || kind == SCX_EXIT_DONE))
 		kind = SCX_EXIT_ERROR;
 
+||||||| 05f7e89ab9731
+=======
+	lockdep_assert_preemption_disabled();
+
+>>>>>>> hardened/6.19
 	if (!atomic_try_cmpxchg(&sch->exit_kind, &none, kind))
 		return false;
 
@@ -6005,6 +6120,7 @@ static void scx_disable_workfn(struct kthread_work *work)
 	struct scx_exit_info *ei = sch->exit_info;
 	int kind;
 
+<<<<<<< HEAD
 	kind = atomic_read(&sch->exit_kind);
 	while (true) {
 		if (kind == SCX_EXIT_DONE)	/* already disabled? */
@@ -6012,6 +6128,26 @@ static void scx_disable_workfn(struct kthread_work *work)
 		WARN_ON_ONCE(kind == SCX_EXIT_NONE);
 		if (atomic_try_cmpxchg(&sch->exit_kind, &kind, SCX_EXIT_DONE))
 			break;
+||||||| 05f7e89ab9731
+	if (WARN_ON_ONCE(kind == SCX_EXIT_NONE || kind == SCX_EXIT_DONE))
+		kind = SCX_EXIT_ERROR;
+
+	rcu_read_lock();
+	sch = rcu_dereference(scx_root);
+	if (sch) {
+		scx_claim_exit(sch, kind);
+		kthread_queue_work(sch->helper, &sch->disable_work);
+=======
+	if (WARN_ON_ONCE(kind == SCX_EXIT_NONE || kind == SCX_EXIT_DONE))
+		kind = SCX_EXIT_ERROR;
+
+	rcu_read_lock();
+	sch = rcu_dereference(scx_root);
+	if (sch) {
+		guard(preempt)();
+		scx_claim_exit(sch, kind);
+		kthread_queue_work(sch->helper, &sch->disable_work);
+>>>>>>> hardened/6.19
 	}
 	ei->kind = kind;
 	ei->reason = scx_exit_reason(ei->kind);
@@ -6703,6 +6839,7 @@ static int validate_ops(struct scx_sched *sch, const struct sched_ext_ops *ops)
 	return 0;
 }
 
+<<<<<<< HEAD
 /*
  * scx_enable() is offloaded to a dedicated system-wide RT kthread to avoid
  * starvation. During the READY -> ENABLED task switching loop, the calling
@@ -6717,10 +6854,35 @@ struct scx_enable_cmd {
 };
 
 static void scx_root_enable_workfn(struct kthread_work *work)
+||||||| 05f7e89ab9731
+static int scx_enable(struct sched_ext_ops *ops, struct bpf_link *link)
+=======
+/*
+ * scx_enable() is offloaded to a dedicated system-wide RT kthread to avoid
+ * starvation. During the READY -> ENABLED task switching loop, the calling
+ * thread's sched_class gets switched from fair to ext. As fair has higher
+ * priority than ext, the calling thread can be indefinitely starved under
+ * fair-class saturation, leading to a system hang.
+ */
+struct scx_enable_cmd {
+	struct kthread_work	work;
+	struct sched_ext_ops	*ops;
+	int			ret;
+};
+
+static void scx_enable_workfn(struct kthread_work *work)
+>>>>>>> hardened/6.19
 {
+<<<<<<< HEAD
 	struct scx_enable_cmd *cmd = container_of(work, struct scx_enable_cmd, work);
 	struct sched_ext_ops *ops = cmd->ops;
 	struct cgroup *cgrp = root_cgroup();
+||||||| 05f7e89ab9731
+=======
+	struct scx_enable_cmd *cmd =
+		container_of(work, struct scx_enable_cmd, work);
+	struct sched_ext_ops *ops = cmd->ops;
+>>>>>>> hardened/6.19
 	struct scx_sched *sch;
 	struct scx_task_iter sti;
 	struct task_struct *p;
@@ -6958,6 +7120,7 @@ err_disable:
 	 * Flush scx_disable_work to ensure that error is reported before init
 	 * completion. sch's base reference will be put by bpf_scx_unreg().
 	 */
+<<<<<<< HEAD
 	scx_error(sch, "scx_root_enable() failed (%d)", ret);
 	scx_flush_disable_work(sch);
 	cmd->ret = 0;
@@ -7314,6 +7477,50 @@ static s32 scx_enable(struct sched_ext_ops *ops, struct bpf_link *link)
 	kthread_queue_work(READ_ONCE(helper), &cmd.work);
 	kthread_flush_work(&cmd.work);
 	return cmd.ret;
+||||||| 05f7e89ab9731
+	scx_error(sch, "scx_enable() failed (%d)", ret);
+	kthread_flush_work(&sch->disable_work);
+	return 0;
+=======
+	scx_error(sch, "scx_enable() failed (%d)", ret);
+	kthread_flush_work(&sch->disable_work);
+	cmd->ret = 0;
+}
+
+static int scx_enable(struct sched_ext_ops *ops, struct bpf_link *link)
+{
+	static struct kthread_worker *helper;
+	static DEFINE_MUTEX(helper_mutex);
+	struct scx_enable_cmd cmd;
+
+	if (!cpumask_equal(housekeeping_cpumask(HK_TYPE_DOMAIN),
+			   cpu_possible_mask)) {
+		pr_err("sched_ext: Not compatible with \"isolcpus=\" domain isolation\n");
+		return -EINVAL;
+	}
+
+	if (!READ_ONCE(helper)) {
+		mutex_lock(&helper_mutex);
+		if (!helper) {
+			struct kthread_worker *w =
+				kthread_run_worker(0, "scx_enable_helper");
+			if (IS_ERR_OR_NULL(w)) {
+				mutex_unlock(&helper_mutex);
+				return -ENOMEM;
+			}
+			sched_set_fifo(w->task);
+			WRITE_ONCE(helper, w);
+		}
+		mutex_unlock(&helper_mutex);
+	}
+
+	kthread_init_work(&cmd.work, scx_enable_workfn);
+	cmd.ops = ops;
+
+	kthread_queue_work(READ_ONCE(helper), &cmd.work);
+	kthread_flush_work(&cmd.work);
+	return cmd.ret;
+>>>>>>> hardened/6.19
 }
 
 
@@ -7888,10 +8095,15 @@ void __init init_sched_ext_class(void)
 		BUG_ON(!zalloc_cpumask_var_node(&rq->scx.cpus_to_kick_if_idle, GFP_KERNEL, n));
 		BUG_ON(!zalloc_cpumask_var_node(&rq->scx.cpus_to_preempt, GFP_KERNEL, n));
 		BUG_ON(!zalloc_cpumask_var_node(&rq->scx.cpus_to_wait, GFP_KERNEL, n));
+<<<<<<< HEAD
 		BUG_ON(!zalloc_cpumask_var_node(&rq->scx.cpus_to_sync, GFP_KERNEL, n));
 		raw_spin_lock_init(&rq->scx.deferred_reenq_lock);
 		INIT_LIST_HEAD(&rq->scx.deferred_reenq_locals);
 		INIT_LIST_HEAD(&rq->scx.deferred_reenq_users);
+||||||| 05f7e89ab9731
+=======
+		BUG_ON(!zalloc_cpumask_var_node(&rq->scx.cpus_to_sync, GFP_KERNEL, n));
+>>>>>>> hardened/6.19
 		rq->scx.deferred_irq_work = IRQ_WORK_INIT_HARD(deferred_irq_workfn);
 		rq->scx.kick_cpus_irq_work = IRQ_WORK_INIT_HARD(kick_cpus_irq_workfn);
 

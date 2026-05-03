@@ -1148,10 +1148,20 @@ int xgbe_powerdown(struct net_device *netdev)
 		return -EINVAL;
 	}
 
+<<<<<<< HEAD
 	if (pdata->power_down) {
 		netdev_dbg(netdev, "Device is already powered down\n");
 		return -EINVAL;
 	}
+||||||| 05f7e89ab9731
+	spin_lock_irqsave(&pdata->lock, flags);
+
+	if (caller == XGMAC_DRIVER_CONTEXT)
+		netif_device_detach(netdev);
+=======
+	if (caller == XGMAC_DRIVER_CONTEXT)
+		netif_device_detach(netdev);
+>>>>>>> hardened/6.19
 
 	netif_device_detach(netdev);
 	netif_tx_stop_all_queues(netdev);
@@ -1166,6 +1176,16 @@ int xgbe_powerdown(struct net_device *netdev)
 
 	pdata->power_down = 1;
 
+<<<<<<< HEAD
+||||||| 05f7e89ab9731
+	spin_unlock_irqrestore(&pdata->lock, flags);
+
+	DBGPR("<--xgbe_powerdown\n");
+
+=======
+	DBGPR("<--xgbe_powerdown\n");
+
+>>>>>>> hardened/6.19
 	return 0;
 }
 
@@ -1179,10 +1199,22 @@ int xgbe_powerup(struct net_device *netdev)
 		return -EINVAL;
 	}
 
+<<<<<<< HEAD
 	if (!pdata->power_down) {
 		netdev_dbg(netdev, "Device is already powered up\n");
 		return -EINVAL;
 	}
+||||||| 05f7e89ab9731
+	spin_lock_irqsave(&pdata->lock, flags);
+
+	pdata->power_down = 0;
+
+	xgbe_napi_enable(pdata, 0);
+=======
+	pdata->power_down = 0;
+
+	xgbe_napi_enable(pdata, 0);
+>>>>>>> hardened/6.19
 
 	hw_if->powerup_tx(pdata);
 	hw_if->powerup_rx(pdata);
@@ -1193,7 +1225,15 @@ int xgbe_powerup(struct net_device *netdev)
 	xgbe_start_timers(pdata);
 	netif_device_attach(netdev);
 
+<<<<<<< HEAD
 	pdata->power_down = 0;
+||||||| 05f7e89ab9731
+	spin_unlock_irqrestore(&pdata->lock, flags);
+
+	DBGPR("<--xgbe_powerup\n");
+=======
+	DBGPR("<--xgbe_powerup\n");
+>>>>>>> hardened/6.19
 
 	return 0;
 }

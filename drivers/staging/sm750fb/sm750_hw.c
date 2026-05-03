@@ -34,11 +34,34 @@ int hw_sm750_map(struct sm750_dev *sm750_dev, struct pci_dev *pdev)
 	sm750_dev->vidreg_start = pci_resource_start(pdev, 1);
 	sm750_dev->vidreg_size = SZ_2M;
 
+<<<<<<< HEAD
 	/* reserve the vidreg space of smi adaptor */
+||||||| 05f7e89ab9731
+	pr_info("mmio phyAddr = %lx\n", sm750_dev->vidreg_start);
+
+	/*
+	 * reserve the vidreg space of smi adaptor
+	 * if you do this, you need to add release region code
+	 * in lynxfb_remove, or memory will not be mapped again
+	 * successfully
+	 */
+=======
+	pr_info("mmio phyAddr = %lx\n", sm750_dev->vidreg_start);
+
+	/* reserve the vidreg space of smi adaptor */
+>>>>>>> hardened/6.19
 	ret = pci_request_region(pdev, 1, "sm750fb");
 	if (ret) {
+<<<<<<< HEAD
 		dev_err(&pdev->dev, "Can not request PCI regions.\n");
 		return ret;
+||||||| 05f7e89ab9731
+		pr_err("Can not request PCI regions.\n");
+		goto exit;
+=======
+		pr_err("Can not request PCI regions.\n");
+		return ret;
+>>>>>>> hardened/6.19
 	}
 
 	/* now map mmio and vidmem */
@@ -69,10 +92,18 @@ int hw_sm750_map(struct sm750_dev *sm750_dev, struct pci_dev *pdev)
 	sm750_dev->pvMem =
 		ioremap_wc(sm750_dev->vidmem_start, sm750_dev->vidmem_size);
 	if (!sm750_dev->pvMem) {
+<<<<<<< HEAD
 		dev_err(&pdev->dev, "Map video memory failed\n");
+||||||| 05f7e89ab9731
+		iounmap(sm750_dev->pvReg);
+		pr_err("Map video memory failed\n");
+=======
+		pr_err("Map video memory failed\n");
+>>>>>>> hardened/6.19
 		ret = -EFAULT;
 		goto err_unmap_reg;
 	}
+<<<<<<< HEAD
 
 	return 0;
 
@@ -80,6 +111,19 @@ err_unmap_reg:
 	iounmap(sm750_dev->pvReg);
 err_release_region:
 	pci_release_region(pdev, 1);
+||||||| 05f7e89ab9731
+	pr_info("video memory vaddr = %p\n", sm750_dev->pvMem);
+exit:
+=======
+	pr_info("video memory vaddr = %p\n", sm750_dev->pvMem);
+
+	return 0;
+
+err_unmap_reg:
+	iounmap(sm750_dev->pvReg);
+err_release_region:
+	pci_release_region(pdev, 1);
+>>>>>>> hardened/6.19
 	return ret;
 }
 

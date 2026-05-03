@@ -615,10 +615,30 @@ int mlx5e_ipsec_aso_query(struct mlx5e_ipsec_sa_entry *sa_entry,
 	mlx5e_ipsec_aso_copy(ctrl, data);
 
 	mlx5_aso_post_wqe(aso->aso, false, &wqe->ctrl);
+<<<<<<< HEAD
 	read_poll_timeout_atomic(mlx5_aso_poll_cq, ret, !ret, 10,
 				 10 * USEC_PER_MSEC, false, aso->aso, false);
 	if (!ret)
 		memcpy(sa_entry->ctx, aso->ctx, MLX5_ST_SZ_BYTES(ipsec_aso));
+||||||| 05f7e89ab9731
+	expires = jiffies + msecs_to_jiffies(10);
+	do {
+		ret = mlx5_aso_poll_cq(aso->aso, false);
+		if (ret)
+			/* We are in atomic context */
+			udelay(10);
+	} while (ret && time_is_after_jiffies(expires));
+=======
+	expires = jiffies + msecs_to_jiffies(10);
+	do {
+		ret = mlx5_aso_poll_cq(aso->aso, false);
+		if (ret)
+			/* We are in atomic context */
+			udelay(10);
+	} while (ret && time_is_after_jiffies(expires));
+	if (!ret)
+		memcpy(sa_entry->ctx, aso->ctx, MLX5_ST_SZ_BYTES(ipsec_aso));
+>>>>>>> hardened/6.19
 	spin_unlock_bh(&aso->lock);
 	return ret;
 }

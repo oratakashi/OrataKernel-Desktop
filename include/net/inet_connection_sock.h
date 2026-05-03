@@ -42,9 +42,19 @@ struct inet_connection_sock_af_ops {
 				      struct request_sock *req,
 				      struct dst_entry *dst,
 				      struct request_sock *req_unhash,
+<<<<<<< HEAD
 				      bool *own_req,
 				      void (*opt_child_init)(struct sock *newsk,
 							     const struct sock *sk));
+||||||| 05f7e89ab9731
+				      bool *own_req);
+	u16	    net_header_len;
+=======
+				      bool *own_req,
+				      void (*opt_child_init)(struct sock *newsk,
+							     const struct sock *sk));
+	u16	    net_header_len;
+>>>>>>> hardened/6.19
 	int	    (*setsockopt)(struct sock *sk, int level, int optname,
 				  sockptr_t optval, unsigned int optlen);
 	int	    (*getsockopt)(struct sock *sk, int level, int optname,

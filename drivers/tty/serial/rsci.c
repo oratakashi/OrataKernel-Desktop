@@ -175,6 +175,7 @@ static void rsci_start_rx(struct uart_port *port)
 	rsci_serial_out(port, CCR0, ctrl);
 }
 
+<<<<<<< HEAD
 static void rsci_enable_ms(struct uart_port *port)
 {
 	mctrl_gpio_enable_ms(to_sci_port(port)->gpios);
@@ -213,6 +214,25 @@ static int rsci_scif_set_rtrg(struct uart_port *port, int rx_trig)
 	return rx_trig;
 }
 
+||||||| 05f7e89ab9731
+=======
+static int rsci_scif_set_rtrg(struct uart_port *port, int rx_trig)
+{
+	u32 fcr = rsci_serial_in(port, FCR);
+
+	if (rx_trig >= port->fifosize)
+		rx_trig = port->fifosize - 1;
+	else if (rx_trig < 1)
+		rx_trig = 0;
+
+	fcr &= ~FCR_RTRG4_0;
+	fcr |= field_prep(FCR_RTRG4_0, rx_trig);
+	rsci_serial_out(port, FCR, fcr);
+
+	return rx_trig;
+}
+
+>>>>>>> hardened/6.19
 static void rsci_set_termios(struct uart_port *port, struct ktermios *termios,
 			     const struct ktermios *old)
 {

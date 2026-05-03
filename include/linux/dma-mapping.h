@@ -80,6 +80,7 @@
 #define DMA_ATTR_MMIO		(1UL << 10)
 
 /*
+<<<<<<< HEAD
  * DMA_ATTR_DEBUGGING_IGNORE_CACHELINES: Indicates the CPU cache line can be
  * overlapped. All mappings sharing a cacheline must have this attribute for
  * this to be considered safe.
@@ -104,6 +105,16 @@
 #define DMA_ATTR_CC_SHARED	(1UL << 13)
 
 /*
+||||||| 05f7e89ab9731
+=======
+ * DMA_ATTR_CPU_CACHE_CLEAN: Indicates the CPU will not dirty any cacheline
+ * overlapping this buffer while it is mapped for DMA. All mappings sharing
+ * a cacheline must have this attribute for this to be considered safe.
+ */
+#define DMA_ATTR_CPU_CACHE_CLEAN	(1UL << 11)
+
+/*
+>>>>>>> hardened/6.19
  * A dma_addr_t can hold any valid DMA or bus address for the platform.  It can
  * be given to a device to use as a DMA source or target.  It is specific to a
  * given device and there may be a translation between the CPU physical address

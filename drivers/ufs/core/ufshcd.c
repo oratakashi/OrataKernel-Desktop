@@ -4437,6 +4437,7 @@ out_unlock:
 	spin_unlock_irqrestore(hba->host->host_lock, flags);
 	mutex_unlock(&hba->uic_cmd_mutex);
 
+<<<<<<< HEAD
 	return ret;
 }
 
@@ -4460,6 +4461,17 @@ int ufshcd_uic_tx_eqtr(struct ufs_hba *hba, int gear)
 	ret = ufshcd_uic_pwr_ctrl(hba, &uic_cmd);
 	ufshcd_release(hba);
 
+||||||| 05f7e89ab9731
+	/*
+	 * If the h8 exit fails during the runtime resume process, it becomes
+	 * stuck and cannot be recovered through the error handler.  To fix
+	 * this, use link recovery instead of the error handler.
+	 */
+	if (ret && hba->pm_op_in_progress)
+		ret = ufshcd_link_recovery(hba);
+
+=======
+>>>>>>> hardened/6.19
 	return ret;
 }
 

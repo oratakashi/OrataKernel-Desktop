@@ -148,9 +148,21 @@ static void xenbus_frontend_dev_shutdown(struct device *_dev)
 }
 
 static const struct dev_pm_ops xenbus_pm_ops = {
+<<<<<<< HEAD
 	.freeze		= xenbus_dev_freeze,
 	.thaw		= xenbus_dev_thaw,
 	.restore	= xenbus_frontend_dev_restore,
+||||||| 05f7e89ab9731
+	.suspend	= xenbus_dev_suspend,
+	.resume		= xenbus_frontend_dev_resume,
+	.freeze		= xenbus_dev_suspend,
+	.thaw		= xenbus_dev_cancel,
+	.restore	= xenbus_dev_resume,
+=======
+	.freeze		= xenbus_dev_suspend,
+	.thaw		= xenbus_dev_cancel,
+	.restore	= xenbus_frontend_dev_resume,
+>>>>>>> hardened/6.19
 };
 
 static struct xen_bus_type xenbus_frontend = {

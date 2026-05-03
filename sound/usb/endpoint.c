@@ -490,9 +490,18 @@ int snd_usb_queue_pending_output_urbs(struct snd_usb_endpoint *ep,
 
 		/* copy over the length information */
 		if (implicit_fb) {
+<<<<<<< HEAD
 			ctx->packets = packet->packets;
 			memcpy(ctx->packet_size, packet->packet_size,
 			       packet->packets * sizeof(packet->packet_size[0]));
+||||||| 05f7e89ab9731
+			for (i = 0; i < packet->packets; i++)
+				ctx->packet_size[i] = packet->packet_size[i];
+=======
+			ctx->packets = packet->packets;
+			for (i = 0; i < packet->packets; i++)
+				ctx->packet_size[i] = packet->packet_size[i];
+>>>>>>> hardened/6.19
 		}
 
 		/* call the data handler to fill in playback data */
@@ -1378,6 +1387,9 @@ int snd_usb_endpoint_set_params(struct snd_usb_audio *chip,
 			      ep->maxpacksize, ep->cur_rate, ep->pps);
 		return -EINVAL;
 	}
+
+	ep->packsize[0] = min(ep->packsize[0], ep->maxframesize);
+	ep->packsize[1] = min(ep->packsize[1], ep->maxframesize);
 
 	/* calculate the frequency in 16.16 format */
 	ep->freqm = ep->freqn;

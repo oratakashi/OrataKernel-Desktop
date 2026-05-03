@@ -656,6 +656,7 @@ int dw_pcie_host_init(struct dw_pcie_rp *pp)
 			goto err_remove_edma;
 	}
 
+<<<<<<< HEAD
 	/*
 	 * Only fail on timeout error. Other errors indicate the device may
 	 * become available later, so continue without failing.
@@ -663,6 +664,19 @@ int dw_pcie_host_init(struct dw_pcie_rp *pp)
 	ret = dw_pcie_wait_for_link(pci);
 	if (ret == -ETIMEDOUT)
 		goto err_stop_link;
+||||||| 05f7e89ab9731
+	/*
+	 * Note: Skip the link up delay only when a Link Up IRQ is present.
+	 * If there is no Link Up IRQ, we should not bypass the delay
+	 * because that would require users to manually rescan for devices.
+	 */
+	if (!pp->use_linkup_irq)
+		/* Ignore errors, the link may come up later */
+		dw_pcie_wait_for_link(pci);
+=======
+	/* Ignore errors, the link may come up later */
+	dw_pcie_wait_for_link(pci);
+>>>>>>> hardened/6.19
 
 	ret = pci_host_probe(bridge);
 	if (ret)
@@ -990,7 +1004,24 @@ static int dw_pcie_iatu_setup(struct dw_pcie_rp *pp)
 		pp->msg_atu_index = ob_iatu_index++;
 	}
 
+<<<<<<< HEAD
 	ib_iatu_index = 0;
+||||||| 05f7e89ab9731
+	pp->msg_atu_index = i;
+
+	i = 0;
+=======
+	if (pp->use_atu_msg) {
+		if (pci->num_ob_windows > ++i) {
+			pp->msg_atu_index = i;
+		} else {
+			dev_err(pci->dev, "Cannot add outbound window for MSG TLP\n");
+			return -ENOMEM;
+		}
+	}
+
+	i = 0;
+>>>>>>> hardened/6.19
 	resource_list_for_each_entry(entry, &pp->bridge->dma_ranges) {
 		resource_size_t res_start, res_size, window_size;
 

@@ -844,8 +844,18 @@ static bool btrfs_submit_chunk(struct btrfs_bio *bbio, int mirror_num)
 			status = errno_to_blk_status(ret);
 			if (status)
 				goto fail;
+<<<<<<< HEAD
 		} else if (bbio->can_use_append ||
 			   (btrfs_is_zoned(fs_info) && inode->flags & BTRFS_INODE_NODATASUM)) {
+||||||| 05f7e89ab9731
+		} else if (use_append ||
+			   (btrfs_is_zoned(fs_info) && inode &&
+			    inode->flags & BTRFS_INODE_NODATASUM)) {
+=======
+		} else if (bbio->can_use_append ||
+			   (btrfs_is_zoned(fs_info) && inode &&
+			    inode->flags & BTRFS_INODE_NODATASUM)) {
+>>>>>>> hardened/6.19
 			ret = btrfs_alloc_dummy_sum(bbio);
 			status = errno_to_blk_status(ret);
 			if (status)

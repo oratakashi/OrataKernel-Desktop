@@ -6282,6 +6282,7 @@ nfsd4_encode_operation(struct nfsd4_compoundres *resp, struct nfsd4_op *op)
 		int len = xdr->buf->len - (op_status_offset + XDR_UNIT);
 
 		so->so_replay.rp_status = op->status;
+<<<<<<< HEAD
 		if (len > NFSD4_REPLAY_ISIZE) {
 			char *buf = kmalloc(len, GFP_KERNEL);
 
@@ -6299,6 +6300,20 @@ nfsd4_encode_operation(struct nfsd4_compoundres *resp, struct nfsd4_op *op)
 		read_bytes_from_xdr_buf(xdr->buf,
 					op_status_offset + XDR_UNIT,
 					so->so_replay.rp_buf, len);
+||||||| 05f7e89ab9731
+		so->so_replay.rp_buflen = len;
+		read_bytes_from_xdr_buf(xdr->buf, op_status_offset + XDR_UNIT,
+						so->so_replay.rp_buf, len);
+=======
+		if (len <= NFSD4_REPLAY_ISIZE) {
+			so->so_replay.rp_buflen = len;
+			read_bytes_from_xdr_buf(xdr->buf,
+						op_status_offset + XDR_UNIT,
+						so->so_replay.rp_buf, len);
+		} else {
+			so->so_replay.rp_buflen = 0;
+		}
+>>>>>>> hardened/6.19
 	}
 status:
 	op->status = nfsd4_map_status(op->status,

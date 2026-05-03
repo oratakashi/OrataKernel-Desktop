@@ -1818,9 +1818,29 @@ static int cqspi_probe(struct platform_device *pdev)
 		return -ENODEV;
 	}
 
+<<<<<<< HEAD
 	ret = cqspi_setup_flash(cqspi);
 	if (ret) {
 		dev_err(dev, "failed to setup flash parameters %d\n", ret);
+||||||| 05f7e89ab9731
+	/* Obtain QSPI clock. */
+	cqspi->clk = devm_clk_get(dev, NULL);
+	if (IS_ERR(cqspi->clk)) {
+		dev_err(dev, "Cannot claim QSPI clock.\n");
+		ret = PTR_ERR(cqspi->clk);
+=======
+	ret = cqspi_setup_flash(cqspi);
+	if (ret) {
+		dev_err(dev, "failed to setup flash parameters %d\n", ret);
+		return ret;
+	}
+
+	/* Obtain QSPI clock. */
+	cqspi->clk = devm_clk_get(dev, NULL);
+	if (IS_ERR(cqspi->clk)) {
+		dev_err(dev, "Cannot claim QSPI clock.\n");
+		ret = PTR_ERR(cqspi->clk);
+>>>>>>> hardened/6.19
 		return ret;
 	}
 
@@ -1866,8 +1886,16 @@ static int cqspi_probe(struct platform_device *pdev)
 
 	ret = clk_bulk_prepare_enable(CLK_QSPI_NUM, cqspi->clks);
 	if (ret) {
+<<<<<<< HEAD
 		dev_err(dev, "Cannot enable QSPI clocks.\n");
 		goto disable_rpm;
+||||||| 05f7e89ab9731
+		dev_err(dev, "Cannot enable QSPI clock.\n");
+		goto probe_clk_failed;
+=======
+		dev_err(dev, "Cannot enable QSPI clock.\n");
+		goto disable_rpm;
+>>>>>>> hardened/6.19
 	}
 
 	/* Obtain QSPI reset control */
@@ -1875,14 +1903,26 @@ static int cqspi_probe(struct platform_device *pdev)
 	if (IS_ERR(rstc)) {
 		ret = PTR_ERR(rstc);
 		dev_err(dev, "Cannot get QSPI reset.\n");
+<<<<<<< HEAD
 		goto disable_clks;
+||||||| 05f7e89ab9731
+		goto probe_reset_failed;
+=======
+		goto disable_clk;
+>>>>>>> hardened/6.19
 	}
 
 	rstc_ocp = devm_reset_control_get_optional_exclusive(dev, "qspi-ocp");
 	if (IS_ERR(rstc_ocp)) {
 		ret = PTR_ERR(rstc_ocp);
 		dev_err(dev, "Cannot get QSPI OCP reset.\n");
+<<<<<<< HEAD
 		goto disable_clks;
+||||||| 05f7e89ab9731
+		goto probe_reset_failed;
+=======
+		goto disable_clk;
+>>>>>>> hardened/6.19
 	}
 
 	if (cqspi->is_jh7110) {
@@ -1890,7 +1930,13 @@ static int cqspi_probe(struct platform_device *pdev)
 		if (IS_ERR(rstc_ref)) {
 			ret = PTR_ERR(rstc_ref);
 			dev_err(dev, "Cannot get QSPI REF reset.\n");
+<<<<<<< HEAD
 			goto disable_clks;
+||||||| 05f7e89ab9731
+			goto probe_reset_failed;
+=======
+			goto disable_clk;
+>>>>>>> hardened/6.19
 		}
 		reset_control_assert(rstc_ref);
 		reset_control_deassert(rstc_ref);
@@ -1933,6 +1979,22 @@ static int cqspi_probe(struct platform_device *pdev)
 			cqspi->slow_sram = true;
 		if (ddata->quirks & CQSPI_NEEDS_APB_AHB_HAZARD_WAR)
 			cqspi->apb_ahb_hazard = true;
+<<<<<<< HEAD
+||||||| 05f7e89ab9731
+
+		if (ddata->jh7110_clk_init) {
+			ret = cqspi_jh7110_clk_init(pdev, cqspi);
+			if (ret)
+				goto probe_reset_failed;
+		}
+=======
+
+		if (ddata->jh7110_clk_init) {
+			ret = cqspi_jh7110_clk_init(pdev, cqspi);
+			if (ret)
+				goto disable_clk;
+		}
+>>>>>>> hardened/6.19
 		if (ddata->quirks & CQSPI_DISABLE_STIG_MODE)
 			cqspi->disable_stig_mode = true;
 
@@ -1991,6 +2053,7 @@ static int cqspi_probe(struct platform_device *pdev)
 		pm_runtime_put_autosuspend(dev);
 
 	return 0;
+<<<<<<< HEAD
 
 release_dma_chan:
 	if (cqspi->rx_chan)
@@ -2004,6 +2067,36 @@ disable_rpm:
 	if (!(ddata && (ddata->quirks & CQSPI_DISABLE_RUNTIME_PM)))
 		pm_runtime_disable(dev);
 
+||||||| 05f7e89ab9731
+probe_setup_failed:
+	if (!(ddata && (ddata->quirks & CQSPI_DISABLE_RUNTIME_PM)))
+		pm_runtime_disable(dev);
+	cqspi_controller_enable(cqspi, 0);
+probe_reset_failed:
+	if (cqspi->is_jh7110)
+		cqspi_jh7110_disable_clk(pdev, cqspi);
+
+	if (pm_runtime_get_sync(&pdev->dev) >= 0)
+		clk_disable_unprepare(cqspi->clk);
+probe_clk_failed:
+=======
+
+release_dma_chan:
+	if (cqspi->rx_chan)
+		dma_release_channel(cqspi->rx_chan);
+disable_controller:
+	cqspi_controller_enable(cqspi, 0);
+disable_clks:
+	if (cqspi->is_jh7110)
+		cqspi_jh7110_disable_clk(pdev, cqspi);
+disable_clk:
+	if (pm_runtime_get_sync(&pdev->dev) >= 0)
+		clk_disable_unprepare(cqspi->clk);
+disable_rpm:
+	if (!(ddata && (ddata->quirks & CQSPI_DISABLE_RUNTIME_PM)))
+		pm_runtime_disable(dev);
+
+>>>>>>> hardened/6.19
 	return ret;
 }
 
@@ -2023,6 +2116,15 @@ static void cqspi_remove(struct platform_device *pdev)
 	if (!refcount_dec_and_test(&cqspi->inflight_ops))
 		cqspi_wait_idle(cqspi);
 
+<<<<<<< HEAD
+||||||| 05f7e89ab9731
+	spi_unregister_controller(cqspi->host);
+	cqspi_controller_enable(cqspi, 0);
+
+=======
+	spi_unregister_controller(cqspi->host);
+
+>>>>>>> hardened/6.19
 	if (cqspi->rx_chan)
 		dma_release_channel(cqspi->rx_chan);
 
@@ -2034,6 +2136,12 @@ static void cqspi_remove(struct platform_device *pdev)
 
 	if (ret >= 0)
 		clk_bulk_disable_unprepare(CLK_QSPI_NUM, cqspi->clks);
+
+	if (!(ddata && (ddata->quirks & CQSPI_DISABLE_RUNTIME_PM)))
+		ret = pm_runtime_get_sync(&pdev->dev);
+
+	if (ret >= 0)
+		clk_disable(cqspi->clk);
 
 	if (!(ddata && (ddata->quirks & CQSPI_DISABLE_RUNTIME_PM))) {
 		pm_runtime_put_sync(&pdev->dev);

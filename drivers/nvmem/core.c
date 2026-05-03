@@ -827,7 +827,14 @@ static int nvmem_add_cells_from_dt(struct nvmem_device *nvmem, struct device_nod
 		ret = nvmem_add_one_cell(nvmem, &info);
 		kfree(info.name);
 		if (ret) {
+<<<<<<< HEAD
 			of_node_put(info.np);
+||||||| 05f7e89ab9731
+			of_node_put(child);
+=======
+			of_node_put(child);
+			of_node_put(info.np);
+>>>>>>> hardened/6.19
 			return ret;
 		}
 	}

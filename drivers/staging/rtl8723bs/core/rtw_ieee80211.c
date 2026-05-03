@@ -186,6 +186,7 @@ u8 *rtw_get_ie_ex(u8 *in_ie, uint in_len, u8 eid, u8 *oui, u8 oui_len, u8 *ie, u
 
 	cnt = 0;
 
+<<<<<<< HEAD
 	while (cnt + 2 <= in_len) {
 		u8 ie_len = in_ie[cnt + 1];
 
@@ -194,6 +195,20 @@ u8 *rtw_get_ie_ex(u8 *in_ie, uint in_len, u8 eid, u8 *oui, u8 oui_len, u8 *ie, u
 
 		if (eid == in_ie[cnt] &&
 		    (!oui || (ie_len >= oui_len && !memcmp(&in_ie[cnt + 2], oui, oui_len)))) {
+||||||| 05f7e89ab9731
+	while (cnt < in_len) {
+		if (eid == in_ie[cnt]
+			&& (!oui || !memcmp(&in_ie[cnt+2], oui, oui_len))) {
+=======
+	while (cnt + 2 <= in_len) {
+		u8 ie_len = in_ie[cnt + 1];
+
+		if (cnt + 2 + ie_len > in_len)
+			break;
+
+		if (eid == in_ie[cnt]
+			&& (!oui || (ie_len >= oui_len && !memcmp(&in_ie[cnt + 2], oui, oui_len)))) {
+>>>>>>> hardened/6.19
 			target_ie = &in_ie[cnt];
 
 			if (ie)

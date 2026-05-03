@@ -364,7 +364,13 @@ struct spinand_device;
 
 /**
  * struct spinand_id - SPI NAND id structure
+<<<<<<< HEAD
  * @data: buffer containing the id bytes. Currently 6 bytes large, but can
+||||||| 05f7e89ab9731
+ * @data: buffer containing the id bytes. Currently 4 bytes large, but can
+=======
+ * @data: buffer containing the id bytes. Currently 5 bytes large, but can
+>>>>>>> hardened/6.19
  *	  be extended if required
  * @len: ID length
  */

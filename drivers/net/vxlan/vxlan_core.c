@@ -2129,11 +2129,20 @@ static bool route_shortcircuit(struct net_device *dev, struct sk_buff *skb)
 	{
 		struct ipv6hdr *pip6;
 
+<<<<<<< HEAD
 		/* check if ipv6.disable=1 set during boot was set
 		 * during booting so nd_tbl is not initialized
 		 */
 		if (!ipv6_mod_enabled())
 			return false;
+||||||| 05f7e89ab9731
+=======
+		/* check if nd_tbl is not initiliazed due to
+		 * ipv6.disable=1 set during boot
+		 */
+		if (!ipv6_stub->nd_tbl)
+			return false;
+>>>>>>> hardened/6.19
 		if (!pskb_may_pull(skb, sizeof(struct ipv6hdr)))
 			return false;
 		pip6 = ipv6_hdr(skb);

@@ -4848,6 +4848,7 @@ void mpi3mr_memset_buffers(struct mpi3mr_ioc *mrioc)
 			mpi3mr_memset_op_reply_q_buffers(mrioc, i);
 		}
 
+<<<<<<< HEAD
 		if (mrioc->req_qinfo) {
 			mrioc->req_qinfo[i].ci = 0;
 			mrioc->req_qinfo[i].pi = 0;
@@ -4858,6 +4859,25 @@ void mpi3mr_memset_buffers(struct mpi3mr_ioc *mrioc)
 			mrioc->req_qinfo[i].last_full_host_tag = 0;
 			mpi3mr_memset_op_req_q_buffers(mrioc, i);
 		}
+||||||| 05f7e89ab9731
+		mrioc->req_qinfo[i].ci = 0;
+		mrioc->req_qinfo[i].pi = 0;
+		mrioc->req_qinfo[i].num_requests = 0;
+		mrioc->req_qinfo[i].qid = 0;
+		mrioc->req_qinfo[i].reply_qid = 0;
+		spin_lock_init(&mrioc->req_qinfo[i].q_lock);
+		mpi3mr_memset_op_req_q_buffers(mrioc, i);
+=======
+		if (mrioc->req_qinfo) {
+			mrioc->req_qinfo[i].ci = 0;
+			mrioc->req_qinfo[i].pi = 0;
+			mrioc->req_qinfo[i].num_requests = 0;
+			mrioc->req_qinfo[i].qid = 0;
+			mrioc->req_qinfo[i].reply_qid = 0;
+			spin_lock_init(&mrioc->req_qinfo[i].q_lock);
+			mpi3mr_memset_op_req_q_buffers(mrioc, i);
+		}
+>>>>>>> hardened/6.19
 	}
 
 	atomic_set(&mrioc->pend_large_data_sz, 0);
