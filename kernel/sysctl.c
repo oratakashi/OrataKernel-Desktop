@@ -22,10 +22,6 @@
 #include <linux/uaccess.h>
 #include <asm/processor.h>
 
-#ifdef CONFIG_USER_NS
-#include <linux/user_namespace.h>
-#endif
-
 /* shared constants to be used in various sysctls */
 const int sysctl_vals[] = { 0, 1, 2, 3, 4, 100, 200, 1000, 3000, INT_MAX, 65535, -1 };
 EXPORT_SYMBOL(sysctl_vals);
@@ -872,35 +868,6 @@ int proc_douintvec(const struct ctl_table *table, int dir, void *buffer,
 }
 
 /**
- * proc_dointvec_minmax_sysadmin - read a vector of integers with min/max values
- * checking CAP_SYS_ADMIN on write
- * @table: the sysctl table
- * @dir: %TRUE if this is a write to the sysctl file
- * @buffer: the user buffer
- * @lenp: the size of the user buffer
- * @ppos: file position
- *
- * Reads/writes up to table->maxlen/sizeof(unsigned int) integer
- * values from/to the user buffer, treated as an ASCII string.
- *
- * This routine will ensure the values are within the range specified by
- * table->extra1 (min) and table->extra2 (max).
- *
- * Writing is only allowed when the current task has CAP_SYS_ADMIN.
- *
- * Returns 0 on success, -EPERM on permission failure or -EINVAL on write
- * when the range check fails.
- */
-int proc_dointvec_minmax_sysadmin(const struct ctl_table *table, int dir,
-				  void *buffer, size_t *lenp, loff_t *ppos)
-{
-	if (dir && !capable(CAP_SYS_ADMIN))
-		return -EPERM;
-
-	return proc_dointvec_minmax(table, dir, buffer, lenp, ppos);
-}
-
-/**
  * proc_dointvec_minmax - read a vector of integers with min/max values
  * @table: the sysctl table
  * @dir: %TRUE if this is a write to the sysctl file
@@ -1354,12 +1321,6 @@ int proc_doulongvec_minmax(const struct ctl_table *table, int dir,
 	return -ENOSYS;
 }
 
-int proc_dointvec_minmax_sysadmin(const struct ctl_table *table, int dir,
-				  void *buffer, size_t *lenp, loff_t *ppos)
-{
-	return -ENOSYS;
-}
-
 int proc_doulongvec_minmax_conv(const struct ctl_table *table, int dir,
 				void *buffer, size_t *lenp, loff_t *ppos,
 				unsigned long convmul, unsigned long convdiv)
@@ -1415,17 +1376,6 @@ int proc_do_static_key(const struct ctl_table *table, int dir,
 }
 
 static const struct ctl_table sysctl_subsys_table[] = {
-#ifdef CONFIG_USER_NS
-	{
-		.procname	= "unprivileged_userns_clone",
-		.data		= &unprivileged_userns_clone,
-		.maxlen		= sizeof(int),
-		.mode		= 0644,
-		.proc_handler	= proc_dointvec_minmax,
-		.extra1         = SYSCTL_ZERO,
-		.extra2         = SYSCTL_ONE,
-	},
-#endif
 #ifdef CONFIG_PROC_SYSCTL
 	{
 		.procname	= "sysctl_writes_strict",
@@ -1498,7 +1448,6 @@ EXPORT_SYMBOL(proc_dointvec);
 EXPORT_SYMBOL(proc_douintvec);
 EXPORT_SYMBOL(proc_dointvec_minmax);
 EXPORT_SYMBOL_GPL(proc_douintvec_minmax);
-EXPORT_SYMBOL(proc_dointvec_minmax_sysadmin);
 EXPORT_SYMBOL(proc_dostring);
 EXPORT_SYMBOL(proc_doulongvec_minmax);
 EXPORT_SYMBOL(proc_do_large_bitmap);

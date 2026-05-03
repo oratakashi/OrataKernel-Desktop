@@ -6045,17 +6045,15 @@ static int __maybe_unused macb_suspend(struct device *dev)
 			/* write IP address into register */
 			tmp |= MACB_BFEXT(IP, ifa_local);
 		}
-		spin_unlock_irqrestore(&bp->lock, flags);
 
 		if (macb_is_gem(bp)) {
 			queue_writel(bp->queues, IER, GEM_BIT(WOL));
 			gem_writel(bp, WOL, tmp);
-			spin_unlock_irqrestore(&bp->lock, flags);
 		} else {
 			queue_writel(bp->queues, IER, MACB_BIT(WOL));
 			macb_writel(bp, WOL, tmp);
-			spin_unlock_irqrestore(&bp->lock, flags);
 		}
+		spin_unlock_irqrestore(&bp->lock, flags);
 
 		enable_irq_wake(bp->queues[0].irq);
 	}

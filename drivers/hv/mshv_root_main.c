@@ -684,14 +684,6 @@ static bool mshv_handle_gpa_intercept(struct mshv_vp *vp)
 	    !(region->hv_map_flags & HV_MAP_GPA_EXECUTABLE))
 		goto put_region;
 
-	if (access_type == HV_INTERCEPT_ACCESS_WRITE &&
-	    !(region->hv_map_flags & HV_MAP_GPA_WRITABLE))
-		goto put_region;
-
-	if (access_type == HV_INTERCEPT_ACCESS_EXECUTE &&
-	    !(region->hv_map_flags & HV_MAP_GPA_EXECUTABLE))
-		goto put_region;
-
 	/* Only movable memory ranges are supported for GPA intercepts */
 	if (region->mreg_type == MSHV_REGION_TYPE_MEM_MOVABLE)
 		ret = mshv_region_handle_gfn_fault(region, gfn);
@@ -1061,9 +1053,6 @@ int mshv_vp_stats_map(u64 partition_id, u32 vp_index,
 		if (!stats_pages[HV_STATS_AREA_PARENT])
 			stats_pages[HV_STATS_AREA_PARENT] = stats_pages[HV_STATS_AREA_SELF];
 	}
-
-	if (!stats_pages[HV_STATS_AREA_PARENT])
-		stats_pages[HV_STATS_AREA_PARENT] = stats_pages[HV_STATS_AREA_SELF];
 
 	return 0;
 

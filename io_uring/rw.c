@@ -1381,7 +1381,6 @@ int io_do_iopoll(struct io_ring_ctx *ctx, bool force_nonspin)
 		nr_events++;
 		req->cqe.flags = io_put_kbuf(req, max(req->cqe.res, 0), NULL);
 		if (!io_is_uring_cmd(req))
-		req->cqe.flags = io_put_kbuf(req, req->cqe.res, NULL);
 			io_req_rw_cleanup(req, 0);
 	}
 	if (nr_events)

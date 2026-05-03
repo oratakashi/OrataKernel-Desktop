@@ -301,6 +301,7 @@ void dcn401_init_hw(struct dc *dc)
 			}
 		}
 	}
+
 	for (i = 0; i < res_pool->audio_count; i++) {
 		struct audio *audio = res_pool->audios[i];
 

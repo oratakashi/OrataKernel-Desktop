@@ -125,7 +125,6 @@ static int __io_msg_ring_data(struct io_ring_ctx *target_ctx,
 	 * in io_msg_data_remote() -> io_req_task_work_add_remote()
 	 */
 	if (smp_load_acquire(&target_ctx->flags) & IORING_SETUP_R_DISABLED)
-	 * in io_msg_data_remote() -> io_msg_remote_post()
 		return -EBADFD;
 
 	if (io_msg_need_remote(target_ctx))

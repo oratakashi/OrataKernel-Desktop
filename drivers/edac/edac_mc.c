@@ -370,9 +370,6 @@ struct mem_ctl_info *edac_mc_alloc(unsigned int mc_num,
 	mci->dev.release = mci_release;
 	device_initialize(&mci->dev);
 
-	mci->dev.release = mci_release;
-	device_initialize(&mci->dev);
-
 	mci->pvt_info = kzalloc(sz_pvt, GFP_KERNEL);
 	if (!mci->pvt_info)
 		goto error;

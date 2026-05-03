@@ -480,12 +480,6 @@ static inline unsigned int io_sqring_entries(struct io_ring_ctx *ctx)
 	return __io_sqring_entries(ctx);
 }
 
-static inline unsigned int io_sqring_entries(struct io_ring_ctx *ctx)
-{
-	guard(rcu)();
-	return __io_sqring_entries(ctx);
-}
-
 /*
  * Don't complete immediately but use deferred completion infrastructure.
  * Protected by ->uring_lock and can only be used either with

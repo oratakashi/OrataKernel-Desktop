@@ -382,10 +382,6 @@ static int io_send_setup(struct io_kiocb *req, const struct io_uring_sqe *sqe)
 
 		kmsg->msg.msg_iter.nr_segs = sr->len;
 		return io_prep_reg_iovec(req, &kmsg->vec, sr->buf, sr->len);
-		if (sr->flags & IORING_SEND_VECTORIZED)
-			return -EINVAL;
-		req->flags |= REQ_F_IMPORT_BUFFER;
-		return 0;
 	}
 	if (req->flags & REQ_F_BUFFER_SELECT)
 		return 0;

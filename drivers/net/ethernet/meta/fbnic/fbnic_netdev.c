@@ -285,23 +285,6 @@ static int fbnic_change_mtu(struct net_device *dev, int new_mtu)
 	return 0;
 }
 
-static int fbnic_change_mtu(struct net_device *dev, int new_mtu)
-{
-	struct fbnic_net *fbn = netdev_priv(dev);
-
-	if (fbnic_check_split_frames(fbn->xdp_prog, new_mtu, fbn->hds_thresh)) {
-		dev_err(&dev->dev,
-			"MTU %d is larger than HDS threshold %d in XDP mode\n",
-			new_mtu, fbn->hds_thresh);
-
-		return -EINVAL;
-	}
-
-	WRITE_ONCE(dev->mtu, new_mtu);
-
-	return 0;
-}
-
 void fbnic_clear_rx_mode(struct fbnic_dev *fbd)
 {
 	struct net_device *netdev = fbd->netdev;
