@@ -69,6 +69,7 @@ bool nvmet_bdev_zns_enable(struct nvmet_ns *ns)
 void nvmet_execute_identify_ctrl_zns(struct nvmet_req *req)
 {
 	u8 zasl = req->sq->ctrl->subsys->zasl;
+	struct nvmet_ctrl *ctrl = req->sq->ctrl;
 	struct nvme_id_ctrl_zns *id;
 	u16 status;
 
@@ -78,7 +79,10 @@ void nvmet_execute_identify_ctrl_zns(struct nvmet_req *req)
 		goto out;
 	}
 
-	id->zasl = min_not_zero(nvmet_ctrl_mdts(req), zasl);
+	if (ctrl->ops->get_mdts)
+		id->zasl = min_t(u8, ctrl->ops->get_mdts(ctrl), zasl);
+	else
+		id->zasl = zasl;
 
 	status = nvmet_copy_to_sgl(req, 0, id, sizeof(*id));
 

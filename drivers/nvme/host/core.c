@@ -454,10 +454,11 @@ void nvme_end_req(struct request *req)
 	blk_mq_end_request(req, status);
 }
 
-static void __nvme_complete_rq(struct request *req)
+void nvme_complete_rq(struct request *req)
 {
 	struct nvme_ctrl *ctrl = nvme_req(req)->ctrl;
 
+	trace_nvme_complete_rq(req);
 	nvme_cleanup_cmd(req);
 
 	/*
@@ -492,12 +493,6 @@ static void __nvme_complete_rq(struct request *req)
 		return;
 	}
 }
-
-void nvme_complete_rq(struct request *req)
-{
-	trace_nvme_complete_rq(req);
-	__nvme_complete_rq(req);
-}
 EXPORT_SYMBOL_GPL(nvme_complete_rq);
 
 void nvme_complete_batch_req(struct request *req)
@@ -518,7 +513,7 @@ blk_status_t nvme_host_path_error(struct request *req)
 {
 	nvme_req(req)->status = NVME_SC_HOST_PATH_ERROR;
 	blk_mq_set_request_complete(req);
-	__nvme_complete_rq(req);
+	nvme_complete_rq(req);
 	return BLK_STS_OK;
 }
 EXPORT_SYMBOL_GPL(nvme_host_path_error);
@@ -3049,7 +3044,7 @@ static const struct nvme_core_quirk_entry core_quirks[] = {
 		 *
 		 * The device is left in a state where it is also not possible
 		 * to use "nvme set-feature" to disable APST, but booting with
-		 * nvme_core.default_ps_max_latency_us=0 works.
+		 * nvme_core.default_ps_max_latency=0 works.
 		 */
 		.vid = 0x1e0f,
 		.mn = "KCD6XVUL6T40",
@@ -4088,8 +4083,7 @@ static int nvme_init_ns_head(struct nvme_ns *ns, struct nvme_ns_info *info)
 	mutex_unlock(&ctrl->subsys->lock);
 
 #ifdef CONFIG_NVME_MULTIPATH
-	if (cancel_delayed_work(&head->remove_work))
-		module_put(THIS_MODULE);
+	cancel_delayed_work(&head->remove_work);
 #endif
 	return 0;
 

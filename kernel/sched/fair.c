@@ -4077,9 +4077,6 @@ static void reweight_entity(struct cfs_rq *cfs_rq, struct sched_entity *se,
 
 	rescale_entity(se, weight, rel_vprot);
 
-	if (rel_vprot)
-		vprot = div_s64(vprot * se->load.weight, weight);
-
 	update_load_set(&se->load, weight);
 
 	do {

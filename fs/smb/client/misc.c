@@ -596,7 +596,6 @@ void cifs_close_all_deferred_files_sb(struct cifs_sb_info *cifs_sb)
 	}
 }
 
-		tmp_list = kmalloc(sizeof(struct tcon_list), GFP_ATOMIC);
 void cifs_close_deferred_file_under_dentry(struct cifs_tcon *tcon,
 					   struct dentry *dentry)
 {

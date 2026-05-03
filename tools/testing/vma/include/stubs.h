@@ -87,8 +87,7 @@ static inline int mmap_action_prepare(struct vm_area_desc *desc)
 }
 
 static inline int mmap_action_complete(struct vm_area_struct *vma,
-				       struct mmap_action *action,
-				       bool is_compat)
+				       struct mmap_action *action)
 {
 	return 0;
 }

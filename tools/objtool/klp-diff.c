@@ -1501,13 +1501,6 @@ static int validate_special_section_klp_reloc(struct elfs *e, struct symbol *sym
 				continue;
 			}
 
-			if (strstr(reloc->sym->name, "__UNIQUE_ID_ddebug_")) {
-				WARN("%s: disabling unsupported pr_debug()",
-				     code_sym->name);
-				ret = 1;
-				continue;
-			}
-
 			ERROR("%s+0x%lx: unsupported static branch key %s.  Use static_key_enabled() instead",
 			      code_sym, code_offset, reloc->sym->name);
 			return -1;

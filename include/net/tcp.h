@@ -287,7 +287,6 @@ static_assert((1 << ATO_BITS) > TCP_DELACK_MAX);
 /* sysctl variables for tcp */
 extern int sysctl_tcp_max_orphans;
 extern long sysctl_tcp_mem[3];
-extern int sysctl_tcp_simult_connect;
 
 #define TCP_RACK_LOSS_DETECTION  0x1 /* Use RACK to detect losses */
 #define TCP_RACK_STATIC_REO_WND  0x2 /* Use static RACK reo wnd */
@@ -1301,7 +1300,6 @@ enum tcp_ca_ack_event_flags {
 #define TCP_CONG_MASK  (TCP_CONG_NON_RESTRICTED | TCP_CONG_NEEDS_ECN | \
 			TCP_CONG_NEEDS_ACCECN | TCP_CONG_ECT_1_NEGOTIATION | \
 			TCP_CONG_NO_FALLBACK_RFC3168 | TCP_CONG_WANTS_CE_EVENTS)
-			TCP_CONG_NO_FALLBACK_RFC3168)
 
 union tcp_cc_info;
 

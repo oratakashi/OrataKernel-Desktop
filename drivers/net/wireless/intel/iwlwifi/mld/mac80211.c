@@ -1935,15 +1935,6 @@ static int iwl_mld_move_sta_state_down(struct iwl_mld *mld,
 			 */
 			iwl_mld_mac_fw_action(mld, vif, FW_CTXT_ACTION_MODIFY);
 		}
-
-		if (sta->tdls) {
-			/*
-			 * update MAC since wifi generation flags may change,
-			 * we also update MAC on disassociation to the AP via
-			 * the vif assoc change
-			 */
-			iwl_mld_mac_fw_action(mld, vif, FW_CTXT_ACTION_MODIFY);
-		}
 	} else {
 		return -EINVAL;
 	}

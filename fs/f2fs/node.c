@@ -1803,13 +1803,8 @@ static bool __write_node_folio(struct folio *folio, bool atomic, bool do_fsync,
 		goto redirty_out;
 	}
 
-	if (atomic) {
-		if (!test_opt(sbi, NOBARRIER))
-			fio.op_flags |= REQ_PREFLUSH | REQ_FUA;
-		if (IS_INODE(folio))
-			set_dentry_mark(folio,
-				f2fs_need_dentry_mark(sbi, ino_of_node(folio)));
-	}
+	if (atomic && !test_opt(sbi, NOBARRIER))
+		fio.op_flags |= REQ_PREFLUSH | REQ_FUA;
 
 	set_dentry_mark(folio, false);
 	set_fsync_mark(folio, do_fsync);

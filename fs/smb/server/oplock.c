@@ -95,7 +95,6 @@ static struct lease_table *alloc_lease_table(struct oplock_info *opinfo)
 	INIT_LIST_HEAD(&lb->lease_list);
 	spin_lock_init(&lb->lb_lock);
 	return lb;
-	lb = kmalloc(sizeof(struct lease_table), KSMBD_DEFAULT_GFP);
 }
 
 static int alloc_lease(struct oplock_info *opinfo, struct lease_ctx_info *lctx)

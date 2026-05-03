@@ -10,7 +10,6 @@
 #include <linux/bug.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
-#include <linux/bug.h>
 #include <linux/lockdep.h>
 #include <linux/math.h>
 #include <linux/panic.h>
@@ -302,10 +301,6 @@ kfence_report_error(unsigned long address, bool is_write, struct pt_regs *regs,
 	pr_err("==================================================================\n");
 
 	lockdep_on();
-
-#ifdef CONFIG_KFENCE_BUG_ON_DATA_CORRUPTION
-	BUG();
-#endif
 
 	check_panic_on_warn("KFENCE");
 

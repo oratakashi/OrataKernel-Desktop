@@ -417,8 +417,6 @@ static int ntfs_truncate(struct inode *inode, loff_t new_size)
 	ni->i_valid = new_valid;
 
 	ni_unlock(ni);
-	if (unlikely(err))
-		return err;
 
 	if (err)
 		return err;
@@ -1031,12 +1029,8 @@ static ssize_t ntfs_compress_write(struct kiocb *iocb, struct iov_iter *from)
 			goto out;
 
 		if (lcn == SPARSE_LCN) {
-			valid = frame_vbo + ((u64)clen << sbi->cluster_bits);
-			if (ni->i_valid == valid) {
-				err = -EINVAL;
-				goto out;
-			}
-			ni->i_valid = valid;
+			ni->i_valid = valid =
+				frame_vbo + ((u64)clen << sbi->cluster_bits);
 			continue;
 		}
 

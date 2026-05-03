@@ -1144,18 +1144,6 @@ static void dw_pcie_ep_init_non_sticky_registers(struct dw_pcie *pci)
 					      offset + PCI_EXP_LNKCAP, lnkcap);
 		}
 	}
-}
-
-static void dw_pcie_ep_init_non_sticky_registers(struct dw_pcie *pci)
-{
-	struct dw_pcie_ep *ep = &pci->ep;
-	u8 funcs = ep->epc->max_functions;
-	u8 func_no;
-
-	dw_pcie_dbi_ro_wr_en(pci);
-
-	for (func_no = 0; func_no < funcs; func_no++)
-		dw_pcie_ep_init_rebar_registers(ep, func_no);
 
 	dw_pcie_dbi_ro_wr_dis(pci);
 }
