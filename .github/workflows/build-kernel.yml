@@ -206,8 +206,24 @@ jobs:
             --no-hostonly \
             "${STAGING}/boot/initramfs-${KR}.img"
 
-          echo "✅ initramfs generated: $(du -sh "${STAGING}/boot/initramfs-${KR}.img")"
+          # ── Fix ownership: dracut berjalan sebagai root, kembalikan ke runner ──
+          sudo chown "${USER}:${USER}" "${STAGING}/boot/initramfs-${KR}.img"
+          sudo chmod 644 "${STAGING}/boot/initramfs-${KR}.img"
 
+          echo "✅ initramfs generated: $(du -sh "${STAGING}/boot/initramfs-${KR}.img")"
+      # Tambahkan di akhir step Generate initramfs atau awal step Package
+      - name: Verify staging file permissions
+        run: |
+          echo "🔍 Checking for root-owned files in staging..."
+          ROOT_FILES=$(find "$(pwd)/staging" -not -readable 2>/dev/null || true)
+          if [[ -n "${ROOT_FILES}" ]]; then
+            echo "⚠️  Files tidak readable ditemukan:"
+            echo "${ROOT_FILES}"
+            sudo chown -R "${USER}:${USER}" "$(pwd)/staging"
+            echo "✅ Fixed ownership untuk semua file di staging"
+          else
+            echo "✅ Semua file readable"
+          fi
       # ─── Generate install.sh ────────────────────────────────────────
       # UX semirip mungkin dengan `sudo make install` dari kernel vanilla.
       # Script mendeteksi systemd-boot dan GRUB secara otomatis.
