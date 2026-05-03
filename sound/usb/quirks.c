@@ -568,8 +568,16 @@ static int snd_usb_extigy_boot_quirk(struct usb_device *dev, struct usb_interfac
 				      0x10, 0x43, 0x0001, 0x000a, NULL, 0);
 		if (err < 0)
 			dev_dbg(&dev->dev, "error sending boot message: %d\n", err);
+<<<<<<< HEAD
 		struct usb_device_descriptor *new_device_descriptor __free(kfree) =
 			kmalloc_obj(*new_device_descriptor);
+||||||| 05f7e89ab9731
+
+		new_device_descriptor = kmalloc(sizeof(*new_device_descriptor), GFP_KERNEL);
+=======
+		struct usb_device_descriptor *new_device_descriptor __free(kfree) =
+			kmalloc(sizeof(*new_device_descriptor), GFP_KERNEL);
+>>>>>>> hardened/6.19
 		if (!new_device_descriptor)
 			return -ENOMEM;
 		err = usb_get_descriptor(dev, USB_DT_DEVICE, 0,
@@ -946,8 +954,15 @@ static int snd_usb_mbox2_boot_quirk(struct usb_device *dev)
 
 	dev_dbg(&dev->dev, "device initialised!\n");
 
+<<<<<<< HEAD
 	struct usb_device_descriptor *new_device_descriptor __free(kfree) =
 		kmalloc_obj(*new_device_descriptor);
+||||||| 05f7e89ab9731
+	new_device_descriptor = kmalloc(sizeof(*new_device_descriptor), GFP_KERNEL);
+=======
+	struct usb_device_descriptor *new_device_descriptor __free(kfree) =
+		kmalloc(sizeof(*new_device_descriptor), GFP_KERNEL);
+>>>>>>> hardened/6.19
 	if (!new_device_descriptor)
 		return -ENOMEM;
 
@@ -1281,8 +1296,15 @@ static int snd_usb_mbox3_boot_quirk(struct usb_device *dev)
 
 	dev_dbg(&dev->dev, "MBOX3: device initialised!\n");
 
+<<<<<<< HEAD
 	struct usb_device_descriptor *new_device_descriptor __free(kfree) =
 		kmalloc_obj(*new_device_descriptor);
+||||||| 05f7e89ab9731
+	new_device_descriptor = kmalloc(sizeof(*new_device_descriptor), GFP_KERNEL);
+=======
+	struct usb_device_descriptor *new_device_descriptor __free(kfree) =
+		kmalloc(sizeof(*new_device_descriptor), GFP_KERNEL);
+>>>>>>> hardened/6.19
 	if (!new_device_descriptor)
 		return -ENOMEM;
 
@@ -2202,12 +2224,18 @@ static const struct usb_audio_quirk_flags_table quirk_flags_table[] = {
 	/* Device and string descriptor matches */
 
 	/* Device matches */
+<<<<<<< HEAD
 	DEVICE_FLG(0x001f, 0x0b21, /* AB13X USB Audio */
 		   QUIRK_FLAG_FORCE_IFACE_RESET | QUIRK_FLAG_IFACE_DELAY),
 	DEVICE_FLG(0x001f, 0x0b23, /* AB17X USB Audio */
 		   QUIRK_FLAG_FORCE_IFACE_RESET | QUIRK_FLAG_IFACE_DELAY),
 	DEVICE_FLG(0x0020, 0x0b21, /* GHW-123P */
 		   QUIRK_FLAG_FORCE_IFACE_RESET | QUIRK_FLAG_IFACE_DELAY),
+||||||| 05f7e89ab9731
+=======
+	DEVICE_FLG(0x001f, 0x0b21, /* AB13X USB Audio */
+		   QUIRK_FLAG_FORCE_IFACE_RESET | QUIRK_FLAG_IFACE_DELAY),
+>>>>>>> hardened/6.19
 	DEVICE_FLG(0x03f0, 0x654a, /* HP 320 FHD Webcam */
 		   QUIRK_FLAG_GET_SAMPLE_RATE | QUIRK_FLAG_MIC_RES_16),
 	DEVICE_FLG(0x041e, 0x3000, /* Creative SB Extigy */
@@ -2501,14 +2529,28 @@ static const struct usb_audio_quirk_flags_table quirk_flags_table[] = {
 		   QUIRK_FLAG_CTL_MSG_DELAY | QUIRK_FLAG_IFACE_DELAY),
 	VENDOR_FLG(0x07fd, /* MOTU */
 		   QUIRK_FLAG_VALIDATE_RATES),
+<<<<<<< HEAD
 	DEVICE_FLG(0x1235, 0x8006, 0), /* Focusrite Scarlett 2i2 1st Gen */
 	DEVICE_FLG(0x1235, 0x800a, 0), /* Focusrite Scarlett 2i4 1st Gen */
 	DEVICE_FLG(0x1235, 0x800c, 0), /* Focusrite Scarlett 18i20 1st Gen */
 	DEVICE_FLG(0x1235, 0x8016, 0), /* Focusrite Scarlett 2i2 1st Gen */
 	DEVICE_FLG(0x1235, 0x801c, 0), /* Focusrite Scarlett Solo 1st Gen */
+||||||| 05f7e89ab9731
+=======
+	DEVICE_FLG(0x1235, 0x8006, 0), /* Focusrite Scarlett 2i2 1st Gen */
+	DEVICE_FLG(0x1235, 0x800a, 0), /* Focusrite Scarlett 2i4 1st Gen */
+	DEVICE_FLG(0x1235, 0x8016, 0), /* Focusrite Scarlett 2i2 1st Gen */
+	DEVICE_FLG(0x1235, 0x801c, 0), /* Focusrite Scarlett Solo 1st Gen */
+>>>>>>> hardened/6.19
 	VENDOR_FLG(0x1235, /* Focusrite Novation */
+<<<<<<< HEAD
 		   QUIRK_FLAG_SKIP_CLOCK_SELECTOR |
 		   QUIRK_FLAG_SKIP_IFACE_SETUP),
+||||||| 05f7e89ab9731
+		   QUIRK_FLAG_VALIDATE_RATES),
+=======
+		   QUIRK_FLAG_SKIP_IFACE_SETUP),
+>>>>>>> hardened/6.19
 	VENDOR_FLG(0x1511, /* AURALiC */
 		   QUIRK_FLAG_DSD_RAW),
 	VENDOR_FLG(0x152a, /* Thesycon devices */
@@ -2590,9 +2632,14 @@ static const char *const snd_usb_audio_quirk_flag_names[] = {
 	QUIRK_STRING_ENTRY(MIC_RES_384),
 	QUIRK_STRING_ENTRY(MIXER_PLAYBACK_MIN_MUTE),
 	QUIRK_STRING_ENTRY(MIXER_CAPTURE_MIN_MUTE),
+<<<<<<< HEAD
 	QUIRK_STRING_ENTRY(SKIP_IFACE_SETUP),
 	QUIRK_STRING_ENTRY(MIXER_PLAYBACK_LINEAR_VOL),
 	QUIRK_STRING_ENTRY(MIXER_CAPTURE_LINEAR_VOL),
+||||||| 05f7e89ab9731
+=======
+	QUIRK_STRING_ENTRY(SKIP_IFACE_SETUP),
+>>>>>>> hardened/6.19
 	NULL
 };
 

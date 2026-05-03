@@ -99,8 +99,16 @@ struct ins_ops {
 };
 
 struct annotate_args {
+<<<<<<< HEAD
 	const struct arch	  *arch;
 	struct map_symbol	  *ms;
+||||||| 05f7e89ab9731
+	struct arch		  *arch;
+	struct map_symbol	  ms;
+=======
+	struct arch		  *arch;
+	struct map_symbol	  *ms;
+>>>>>>> hardened/6.19
 	struct annotation_options *options;
 	s64			  offset;
 	char			  *line;

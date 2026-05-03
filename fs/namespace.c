@@ -5976,10 +5976,20 @@ SYSCALL_DEFINE4(statmount, const struct mnt_id_req __user *, req,
 		if (IS_ERR(ns))
 			return PTR_ERR(ns);
 
+<<<<<<< HEAD
 		if (kreq.mnt_ns_id && (ns != current->nsproxy->mnt_ns) &&
 		    !ns_capable_noaudit(ns->user_ns, CAP_SYS_ADMIN))
 			return -EPERM;
 	}
+||||||| 05f7e89ab9731
+	if (kreq.mnt_ns_id && (ns != current->nsproxy->mnt_ns) &&
+	    !ns_capable_noaudit(ns->user_ns, CAP_SYS_ADMIN))
+		return -ENOENT;
+=======
+	if (kreq.mnt_ns_id && (ns != current->nsproxy->mnt_ns) &&
+	    !ns_capable_noaudit(ns->user_ns, CAP_SYS_ADMIN))
+		return -EPERM;
+>>>>>>> hardened/6.19
 
 	ks = kmalloc(sizeof(*ks), GFP_KERNEL_ACCOUNT);
 	if (!ks)

@@ -1379,10 +1379,15 @@ void ceph_process_folio_batch(struct address_space *mapping,
 		rc = move_dirty_folio_in_page_array(mapping, wbc, ceph_wbc,
 				folio);
 		if (rc) {
+<<<<<<< HEAD
 			/* Did we just begin a new contiguous op? Nevermind! */
 			if (ceph_wbc->len == 0)
 				ceph_wbc->num_ops--;
 
+||||||| 05f7e89ab9731
+=======
+			rc = 0;
+>>>>>>> hardened/6.19
 			folio_redirty_for_writepage(wbc, folio);
 			folio_unlock(folio);
 			break;

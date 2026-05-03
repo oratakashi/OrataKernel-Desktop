@@ -174,9 +174,15 @@ static inline int drm_of_panel_bridge_remove(const struct device_node *np,
 	bridge = of_drm_find_and_get_bridge(remote);
 	drm_panel_bridge_remove(bridge);
 
+<<<<<<< HEAD
 	drm_bridge_put(bridge);
 	of_node_put(remote);
 
+||||||| 05f7e89ab9731
+=======
+	of_node_put(remote);
+
+>>>>>>> hardened/6.19
 	return 0;
 #else
 	return -EINVAL;

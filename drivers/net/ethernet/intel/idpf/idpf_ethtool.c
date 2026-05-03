@@ -307,7 +307,16 @@ static int idpf_del_flow_steer(struct net_device *netdev,
 	vport_config = vport->adapter->vport_config[np->vport_idx];
 	user_config = &vport_config->user_config;
 
+<<<<<<< HEAD
 	rule = kzalloc_flex(*rule, rule_info, 1);
+||||||| 05f7e89ab9731
+	if (!idpf_sideband_action_ena(vport, fsp))
+		return -EOPNOTSUPP;
+
+	rule = kzalloc(struct_size(rule, rule_info, 1), GFP_KERNEL);
+=======
+	rule = kzalloc(struct_size(rule, rule_info, 1), GFP_KERNEL);
+>>>>>>> hardened/6.19
 	if (!rule)
 		return -ENOMEM;
 

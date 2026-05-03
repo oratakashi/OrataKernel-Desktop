@@ -2922,6 +2922,7 @@ static int nvme_setup_io_queues(struct nvme_dev *dev)
 	dev->nr_write_queues = write_queues;
 	dev->nr_poll_queues = poll_queues;
 
+<<<<<<< HEAD
 	if (dev->ctrl.tagset) {
 		/*
 		 * The set's maps are allocated only once at initialization
@@ -2941,6 +2942,17 @@ static int nvme_setup_io_queues(struct nvme_dev *dev)
 	 */
 	nr_io_queues = min(nvme_max_io_queues(dev),
 			   dev->nr_allocated_queues - 1);
+||||||| 05f7e89ab9731
+	nr_io_queues = dev->nr_allocated_queues - 1;
+=======
+	/*
+	 * The initial number of allocated queue slots may be too large if the
+	 * user reduced the special queue parameters. Cap the value to the
+	 * number we need for this round.
+	 */
+	nr_io_queues = min(nvme_max_io_queues(dev),
+			   dev->nr_allocated_queues - 1);
+>>>>>>> hardened/6.19
 	result = nvme_set_queue_count(&dev->ctrl, &nr_io_queues);
 	if (result < 0)
 		return result;

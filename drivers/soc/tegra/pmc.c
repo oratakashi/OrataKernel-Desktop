@@ -3385,21 +3385,74 @@ static void wke_clear_wake_status(struct tegra_pmc *pmc)
 		status = readl(pmc->wake + WAKE_AOWAKE_STATUS_R(pmc, i)) & mask;
 
 		for_each_set_bit(wake, &status, 32)
+<<<<<<< HEAD
 			wke_32kwritel(pmc, 0x1, WAKE_AOWAKE_STATUS_W(pmc,
 							(i * 32) + wake));
 	}
 }
 
+||||||| 05f7e89ab9731
+			wke_32kwritel(pmc, 0x1, WAKE_AOWAKE_STATUS_W((i * 32) + wake));
+	}
+}
+
+/* translate sc7 wake sources back into IRQs to catch edge triggered wakeups */
+static void tegra186_pmc_process_wake_events(struct tegra_pmc *pmc, unsigned int index,
+					     unsigned long status)
+{
+	unsigned int wake;
+
+	dev_dbg(pmc->dev, "Wake[%d:%d]  status=%#lx\n", (index * 32) + 31, index * 32, status);
+
+	for_each_set_bit(wake, &status, 32) {
+		irq_hw_number_t hwirq = wake + 32 * index;
+		struct irq_desc *desc;
+		unsigned int irq;
+
+		irq = irq_find_mapping(pmc->domain, hwirq);
+
+		desc = irq_to_desc(irq);
+		if (!desc || !desc->action || !desc->action->name) {
+			dev_dbg(pmc->dev, "Resume caused by WAKE%ld, IRQ %d\n", hwirq, irq);
+			continue;
+		}
+
+		dev_dbg(pmc->dev, "Resume caused by WAKE%ld, %s\n", hwirq, desc->action->name);
+		generic_handle_irq(irq);
+	}
+}
+
+=======
+			wke_32kwritel(pmc, 0x1, WAKE_AOWAKE_STATUS_W((i * 32) + wake));
+	}
+}
+
+>>>>>>> hardened/6.19
 static void tegra186_pmc_wake_syscore_resume(void *data)
 {
+<<<<<<< HEAD
 	struct tegra_pmc *pmc = data;
+||||||| 05f7e89ab9731
+	u32 status, mask;
+=======
+>>>>>>> hardened/6.19
 	unsigned int i;
 	u32 mask;
 
 	for (i = 0; i < pmc->soc->max_wake_vectors; i++) {
+<<<<<<< HEAD
 		mask = readl(pmc->wake + WAKE_AOWAKE_TIER2_ROUTING(pmc, i));
 		pmc->wake_status[i] = readl(pmc->wake +
 					    WAKE_AOWAKE_STATUS_R(pmc, i)) & mask;
+||||||| 05f7e89ab9731
+		mask = readl(pmc->wake + WAKE_AOWAKE_TIER2_ROUTING(i));
+		status = readl(pmc->wake + WAKE_AOWAKE_STATUS_R(i)) & mask;
+
+		tegra186_pmc_process_wake_events(pmc, i, status);
+=======
+		mask = readl(pmc->wake + WAKE_AOWAKE_TIER2_ROUTING(i));
+		pmc->wake_status[i] = readl(pmc->wake + WAKE_AOWAKE_STATUS_R(i)) & mask;
+>>>>>>> hardened/6.19
 	}
 
 	/* Schedule IRQ work to process wake IRQs (if any) */
@@ -3408,6 +3461,7 @@ static void tegra186_pmc_wake_syscore_resume(void *data)
 
 static int tegra186_pmc_wake_syscore_suspend(void *data)
 {
+<<<<<<< HEAD
 	struct tegra_pmc *pmc = data;
 	unsigned int i;
 
@@ -3418,6 +3472,17 @@ static int tegra186_pmc_wake_syscore_suspend(void *data)
 				 "Unhandled wake IRQs pending vector[%u]: 0x%x\n",
 				 i, pmc->wake_status[i]);
 
+||||||| 05f7e89ab9731
+=======
+	unsigned int i;
+
+	/* Check if there are unhandled wake IRQs */
+	for (i = 0; i < pmc->soc->max_wake_vectors; i++)
+		if (pmc->wake_status[i])
+			dev_warn(pmc->dev,
+				 "Unhandled wake IRQs pending vector[%u]: 0x%x\n",
+				 i, pmc->wake_status[i]);
+>>>>>>> hardened/6.19
 	wke_read_sw_wake_status(pmc);
 
 	/* flip the wakeup trigger for dual-edge triggered pads

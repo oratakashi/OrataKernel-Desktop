@@ -120,11 +120,21 @@ static int __io_msg_ring_data(struct io_ring_ctx *target_ctx,
 		return -EINVAL;
 	if (!(msg->flags & IORING_MSG_RING_FLAGS_PASS) && msg->dst_fd)
 		return -EINVAL;
+<<<<<<< HEAD
 	/*
 	 * Keep IORING_SETUP_R_DISABLED check before submitter_task load
 	 * in io_msg_data_remote() -> io_req_task_work_add_remote()
 	 */
 	if (smp_load_acquire(&target_ctx->flags) & IORING_SETUP_R_DISABLED)
+||||||| 05f7e89ab9731
+	if (target_ctx->flags & IORING_SETUP_R_DISABLED)
+=======
+	/*
+	 * Keep IORING_SETUP_R_DISABLED check before submitter_task load
+	 * in io_msg_data_remote() -> io_msg_remote_post()
+	 */
+	if (smp_load_acquire(&target_ctx->flags) & IORING_SETUP_R_DISABLED)
+>>>>>>> hardened/6.19
 		return -EBADFD;
 
 	if (io_msg_need_remote(target_ctx))

@@ -686,7 +686,15 @@ static inline s64 entity_key(struct cfs_rq *cfs_rq, struct sched_entity *se)
  * deltas: (v_i - v0), will be in the order of the maximal (virtual) lag
  * induced in the system due to quantisation.
  */
+<<<<<<< HEAD
 static inline unsigned long avg_vruntime_weight(struct cfs_rq *cfs_rq, unsigned long w)
+||||||| 05f7e89ab9731
+static void
+avg_vruntime_add(struct cfs_rq *cfs_rq, struct sched_entity *se)
+=======
+static void
+sum_w_vruntime_add(struct cfs_rq *cfs_rq, struct sched_entity *se)
+>>>>>>> hardened/6.19
 {
 #ifdef CONFIG_64BIT
 	if (cfs_rq->sum_shift)
@@ -695,6 +703,7 @@ static inline unsigned long avg_vruntime_weight(struct cfs_rq *cfs_rq, unsigned 
 	return w;
 }
 
+<<<<<<< HEAD
 static inline void
 __sum_w_vruntime_add(struct cfs_rq *cfs_rq, struct sched_entity *se)
 {
@@ -706,10 +715,23 @@ __sum_w_vruntime_add(struct cfs_rq *cfs_rq, struct sched_entity *se)
 
 	cfs_rq->sum_w_vruntime += w_vruntime;
 	cfs_rq->sum_weight += weight;
+||||||| 05f7e89ab9731
+	cfs_rq->avg_vruntime += key * weight;
+	cfs_rq->avg_load += weight;
+=======
+	cfs_rq->sum_w_vruntime += key * weight;
+	cfs_rq->sum_weight += weight;
+>>>>>>> hardened/6.19
 }
 
 static void
+<<<<<<< HEAD
 sum_w_vruntime_add_paranoid(struct cfs_rq *cfs_rq, struct sched_entity *se)
+||||||| 05f7e89ab9731
+avg_vruntime_sub(struct cfs_rq *cfs_rq, struct sched_entity *se)
+=======
+sum_w_vruntime_sub(struct cfs_rq *cfs_rq, struct sched_entity *se)
+>>>>>>> hardened/6.19
 {
 	unsigned long weight;
 	s64 key, tmp;
@@ -799,6 +821,7 @@ u64 avg_vruntime(struct cfs_rq *cfs_rq)
 	if (curr && !curr->on_rq)
 		curr = NULL;
 
+<<<<<<< HEAD
 	if (weight) {
 		s64 runtime = cfs_rq->sum_w_vruntime;
 
@@ -808,8 +831,24 @@ u64 avg_vruntime(struct cfs_rq *cfs_rq)
 			runtime += entity_key(cfs_rq, curr) * w;
 			weight += w;
 		}
+||||||| 05f7e89ab9731
+		avg += entity_key(cfs_rq, curr) * weight;
+		load += weight;
+	}
+=======
+	if (weight) {
+		s64 runtime = cfs_rq->sum_w_vruntime;
+
+		if (curr) {
+			unsigned long w = scale_load_down(curr->load.weight);
+
+			runtime += entity_key(cfs_rq, curr) * w;
+			weight += w;
+		}
+>>>>>>> hardened/6.19
 
 		/* sign flips effective floor / ceiling */
+<<<<<<< HEAD
 		if (runtime < 0)
 			runtime -= (weight - 1);
 
@@ -819,6 +858,21 @@ u64 avg_vruntime(struct cfs_rq *cfs_rq)
 		 * When there is but one element, it is the average.
 		 */
 		delta = curr->vruntime - cfs_rq->zero_vruntime;
+||||||| 05f7e89ab9731
+		if (avg < 0)
+			avg -= (load - 1);
+		avg = div_s64(avg, load);
+=======
+		if (runtime < 0)
+			runtime -= (weight - 1);
+
+		delta = div_s64(runtime, weight);
+	} else if (curr) {
+		/*
+		 * When there is but one element, it is the average.
+		 */
+		delta = curr->vruntime - cfs_rq->zero_vruntime;
+>>>>>>> hardened/6.19
 	}
 
 	update_zero_vruntime(cfs_rq, delta);
@@ -870,6 +924,7 @@ bool update_entity_lag(struct cfs_rq *cfs_rq, struct sched_entity *se)
 
 	WARN_ON_ONCE(!se->on_rq);
 
+<<<<<<< HEAD
 	if (se->sched_delayed) {
 		/* previous vlag < 0 otherwise se would not be delayed */
 		vlag = max(vlag, se->vlag);
@@ -878,6 +933,13 @@ bool update_entity_lag(struct cfs_rq *cfs_rq, struct sched_entity *se)
 	}
 	ret = (vlag == se->vlag);
 	se->vlag = vlag;
+||||||| 05f7e89ab9731
+	vlag = avg_vruntime(cfs_rq) - se->vruntime;
+	limit = calc_delta_fair(max_t(u64, 2*se->slice, TICK_NSEC), se);
+=======
+	vlag = avg_vruntime(cfs_rq) - se->vruntime;
+	limit = calc_delta_fair(max_slice, se);
+>>>>>>> hardened/6.19
 
 	return ret;
 }
@@ -4053,8 +4115,14 @@ static void reweight_entity(struct cfs_rq *cfs_rq, struct sched_entity *se,
 			    unsigned long weight)
 {
 	bool curr = cfs_rq->curr == se;
+<<<<<<< HEAD
 	bool rel_vprot = false;
 	u64 avruntime = 0;
+||||||| 05f7e89ab9731
+=======
+	bool rel_vprot = false;
+	u64 vprot;
+>>>>>>> hardened/6.19
 
 	if (se->on_rq) {
 		/* commit outstanding execution time */
@@ -4063,11 +4131,20 @@ static void reweight_entity(struct cfs_rq *cfs_rq, struct sched_entity *se,
 		se->vlag = entity_lag(cfs_rq, se, avruntime);
 		se->deadline -= avruntime;
 		se->rel_deadline = 1;
+<<<<<<< HEAD
 		if (curr && protect_slice(se)) {
 			se->vprot -= avruntime;
 			rel_vprot = true;
 		}
 
+||||||| 05f7e89ab9731
+=======
+		if (curr && protect_slice(se)) {
+			vprot = se->vprot - se->vruntime;
+			rel_vprot = true;
+		}
+
+>>>>>>> hardened/6.19
 		cfs_rq->nr_queued--;
 		if (!curr)
 			__dequeue_entity(cfs_rq, se);
@@ -4076,6 +4153,9 @@ static void reweight_entity(struct cfs_rq *cfs_rq, struct sched_entity *se,
 	dequeue_load_avg(cfs_rq, se);
 
 	rescale_entity(se, weight, rel_vprot);
+
+	if (rel_vprot)
+		vprot = div_s64(vprot * se->load.weight, weight);
 
 	update_load_set(&se->load, weight);
 
@@ -4086,12 +4166,20 @@ static void reweight_entity(struct cfs_rq *cfs_rq, struct sched_entity *se,
 
 	enqueue_load_avg(cfs_rq, se);
 	if (se->on_rq) {
+<<<<<<< HEAD
 		if (rel_vprot)
 			se->vprot += avruntime;
 		se->deadline += avruntime;
 		se->rel_deadline = 0;
 		se->vruntime = avruntime - se->vlag;
 
+||||||| 05f7e89ab9731
+		place_entity(cfs_rq, se, 0);
+=======
+		place_entity(cfs_rq, se, 0);
+		if (rel_vprot)
+			se->vprot = se->vruntime + vprot;
+>>>>>>> hardened/6.19
 		update_load_add(&cfs_rq->load, se->load.weight);
 		if (!curr)
 			__enqueue_entity(cfs_rq, se);

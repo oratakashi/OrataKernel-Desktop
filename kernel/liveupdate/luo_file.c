@@ -629,6 +629,7 @@ int luo_retrieve_file(struct luo_file_set *file_set, u64 token,
 		return err;
 	}
 
+<<<<<<< HEAD
 	luo_file->file = args.file;
 	/* Get reference so we can keep this file in LUO until finish */
 	get_file(luo_file->file);
@@ -641,6 +642,17 @@ int luo_retrieve_file(struct luo_file_set *file_set, u64 token,
 	luo_file->retrieve_status = 1;
 
 	return 0;
+||||||| 05f7e89ab9731
+	return err;
+=======
+	luo_file->file = args.file;
+	/* Get reference so we can keep this file in LUO until finish */
+	get_file(luo_file->file);
+	*filep = luo_file->file;
+	luo_file->retrieve_status = 1;
+
+	return 0;
+>>>>>>> hardened/6.19
 }
 
 static int luo_file_can_finish_one(struct luo_file_set *file_set,

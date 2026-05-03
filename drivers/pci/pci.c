@@ -3648,6 +3648,7 @@ bool pci_acs_path_enabled(struct pci_dev *start,
  */
 void pci_acs_init(struct pci_dev *dev)
 {
+<<<<<<< HEAD
 	int pos;
 
 	dev->acs_cap = pci_find_ext_capability(dev, PCI_EXT_CAP_ID_ACS);
@@ -3657,6 +3658,19 @@ void pci_acs_init(struct pci_dev *dev)
 
 	pci_read_config_word(dev, pos + PCI_ACS_CAP, &dev->acs_capabilities);
 	pci_disable_broken_acs_cap(dev);
+||||||| 05f7e89ab9731
+	dev->acs_cap = pci_find_ext_capability(dev, PCI_EXT_CAP_ID_ACS);
+
+	/*
+	 * Attempt to enable ACS regardless of capability because some Root
+	 * Ports (e.g. those quirked with *_intel_pch_acs_*) do not have
+	 * the standard ACS capability but still support ACS via those
+	 * quirks.
+	 */
+	pci_enable_acs(dev);
+=======
+	dev->acs_cap = pci_find_ext_capability(dev, PCI_EXT_CAP_ID_ACS);
+>>>>>>> hardened/6.19
 }
 
 /**
@@ -5399,19 +5413,133 @@ static bool pci_slot_resettable(struct pci_slot *slot)
 /* Lock devices from the top of the tree down */
 static void pci_slot_lock(struct pci_slot *slot)
 {
+<<<<<<< HEAD
 	__pci_bus_lock(slot->bus, slot);
+||||||| 05f7e89ab9731
+	struct pci_dev *dev;
+
+	list_for_each_entry(dev, &slot->bus->devices, bus_list) {
+		if (!dev->slot || dev->slot != slot)
+			continue;
+		if (dev->subordinate)
+			pci_bus_lock(dev->subordinate);
+		else
+			pci_dev_lock(dev);
+	}
+=======
+	struct pci_dev *dev, *bridge = slot->bus->self;
+
+	if (bridge)
+		pci_dev_lock(bridge);
+
+	list_for_each_entry(dev, &slot->bus->devices, bus_list) {
+		if (!dev->slot || dev->slot != slot)
+			continue;
+		if (dev->subordinate)
+			pci_bus_lock(dev->subordinate);
+		else
+			pci_dev_lock(dev);
+	}
+>>>>>>> hardened/6.19
 }
 
 /* Unlock devices from the bottom of the tree up */
 static void pci_slot_unlock(struct pci_slot *slot)
 {
+<<<<<<< HEAD
 	__pci_bus_unlock(slot->bus, slot);
+||||||| 05f7e89ab9731
+	struct pci_dev *dev;
+
+	list_for_each_entry(dev, &slot->bus->devices, bus_list) {
+		if (!dev->slot || dev->slot != slot)
+			continue;
+		if (dev->subordinate)
+			pci_bus_unlock(dev->subordinate);
+		else
+			pci_dev_unlock(dev);
+	}
+=======
+	struct pci_dev *dev, *bridge = slot->bus->self;
+
+	list_for_each_entry(dev, &slot->bus->devices, bus_list) {
+		if (!dev->slot || dev->slot != slot)
+			continue;
+		if (dev->subordinate)
+			pci_bus_unlock(dev->subordinate);
+		else
+			pci_dev_unlock(dev);
+	}
+
+	if (bridge)
+		pci_dev_unlock(bridge);
+>>>>>>> hardened/6.19
 }
 
 /* Return 1 on successful lock, 0 on contention */
 static int pci_slot_trylock(struct pci_slot *slot)
 {
+<<<<<<< HEAD
 	return __pci_bus_trylock(slot->bus, slot);
+||||||| 05f7e89ab9731
+	struct pci_dev *dev;
+
+	list_for_each_entry(dev, &slot->bus->devices, bus_list) {
+		if (!dev->slot || dev->slot != slot)
+			continue;
+		if (dev->subordinate) {
+			if (!pci_bus_trylock(dev->subordinate)) {
+				pci_dev_unlock(dev);
+				goto unlock;
+			}
+		} else if (!pci_dev_trylock(dev))
+			goto unlock;
+	}
+	return 1;
+
+unlock:
+	list_for_each_entry_continue_reverse(dev,
+					     &slot->bus->devices, bus_list) {
+		if (!dev->slot || dev->slot != slot)
+			continue;
+		if (dev->subordinate)
+			pci_bus_unlock(dev->subordinate);
+		else
+			pci_dev_unlock(dev);
+	}
+	return 0;
+=======
+	struct pci_dev *dev, *bridge = slot->bus->self;
+
+	if (bridge && !pci_dev_trylock(bridge))
+		return 0;
+
+	list_for_each_entry(dev, &slot->bus->devices, bus_list) {
+		if (!dev->slot || dev->slot != slot)
+			continue;
+		if (dev->subordinate) {
+			if (!pci_bus_trylock(dev->subordinate))
+				goto unlock;
+		} else if (!pci_dev_trylock(dev))
+			goto unlock;
+	}
+	return 1;
+
+unlock:
+	list_for_each_entry_continue_reverse(dev,
+					     &slot->bus->devices, bus_list) {
+		if (!dev->slot || dev->slot != slot)
+			continue;
+		if (dev->subordinate)
+			pci_bus_unlock(dev->subordinate);
+		else
+			pci_dev_unlock(dev);
+	}
+
+	if (bridge)
+		pci_dev_unlock(bridge);
+	return 0;
+>>>>>>> hardened/6.19
 }
 
 /*

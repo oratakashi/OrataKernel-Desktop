@@ -1854,6 +1854,7 @@ static int run_one_delayed_ref(struct btrfs_trans_handle *trans,
 		   node->type == BTRFS_SHARED_DATA_REF_KEY) {
 		ret = run_delayed_data_ref(trans, href, node, extent_op,
 					   insert_reserved);
+<<<<<<< HEAD
 	} else if (unlikely(node->type != BTRFS_EXTENT_OWNER_REF_KEY)) {
 		ret = -EUCLEAN;
 		btrfs_err(fs_info, "unexpected delayed ref node type: %u", node->type);
@@ -1863,6 +1864,28 @@ static int run_one_delayed_ref(struct btrfs_trans_handle *trans,
 		if (insert_reserved)
 			btrfs_pin_extent(trans, node->bytenr, node->num_bytes);
 		btrfs_err(fs_info,
+||||||| 05f7e89ab9731
+	else if (node->type == BTRFS_EXTENT_OWNER_REF_KEY)
+		ret = 0;
+	else
+		BUG();
+	if (ret && insert_reserved)
+		btrfs_pin_extent(trans, node->bytenr, node->num_bytes);
+	if (ret < 0)
+		btrfs_err(trans->fs_info,
+=======
+	} else if (node->type == BTRFS_EXTENT_OWNER_REF_KEY) {
+		ret = 0;
+	} else {
+		ret = -EUCLEAN;
+		btrfs_err(fs_info, "unexpected delayed ref node type: %u", node->type);
+	}
+
+	if (ret && insert_reserved)
+		btrfs_pin_extent(trans, node->bytenr, node->num_bytes);
+	if (ret < 0)
+		btrfs_err(fs_info,
+>>>>>>> hardened/6.19
 "failed to run delayed ref for logical %llu num_bytes %llu type %u action %u ref_mod %d: %d",
 			  node->bytenr, node->num_bytes, node->type,
 			  node->action, node->ref_mod, ret);
@@ -6902,11 +6925,52 @@ int btrfs_trim_fs(struct btrfs_fs_info *fs_info, struct fstrim_range *range)
 			"failed to trim %llu block group(s), first error %d",
 			bg_failed, bg_ret);
 
+<<<<<<< HEAD
+	if (ret == -ERESTARTSYS || ret == -EINTR)
+		return ret;
+||||||| 05f7e89ab9731
+	mutex_lock(&fs_devices->device_list_mutex);
+	list_for_each_entry(device, &fs_devices->devices, dev_list) {
+		if (test_bit(BTRFS_DEV_STATE_MISSING, &device->dev_state))
+			continue;
+=======
 	if (ret == -ERESTARTSYS || ret == -EINTR)
 		return ret;
 
+	mutex_lock(&fs_devices->device_list_mutex);
+	list_for_each_entry(device, &fs_devices->devices, dev_list) {
+		if (test_bit(BTRFS_DEV_STATE_MISSING, &device->dev_state))
+			continue;
+>>>>>>> hardened/6.19
+
+<<<<<<< HEAD
 	ret = btrfs_trim_free_extents(fs_info, &group_trimmed, &dev_failed, &dev_ret);
 	trimmed += group_trimmed;
+||||||| 05f7e89ab9731
+		ret = btrfs_trim_free_extents(device, &group_trimmed);
+
+		trimmed += group_trimmed;
+		if (ret) {
+			dev_failed++;
+			dev_ret = ret;
+			break;
+		}
+	}
+	mutex_unlock(&fs_devices->device_list_mutex);
+=======
+		ret = btrfs_trim_free_extents(device, &group_trimmed);
+
+		trimmed += group_trimmed;
+		if (ret == -ERESTARTSYS || ret == -EINTR)
+			break;
+		if (ret) {
+			dev_failed++;
+			dev_ret = ret;
+			continue;
+		}
+	}
+	mutex_unlock(&fs_devices->device_list_mutex);
+>>>>>>> hardened/6.19
 
 	if (dev_failed)
 		btrfs_warn(fs_info,
