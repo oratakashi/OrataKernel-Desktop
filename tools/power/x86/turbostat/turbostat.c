@@ -2875,9 +2875,21 @@ static inline int print_name(int width, int *printed, char *delim, char *name, e
 	char *sep = (*printed)++ ? delim : "";
 
 	if (format == FORMAT_RAW && width >= 64)
+<<<<<<< HEAD
 		return sprintf(outp, "%s%-8s", sep, name);
+||||||| 05f7e89ab9731
+		return (sprintf(outp, "%s%-8s", (*printed++ ? delim : ""), name));
+=======
+		return (sprintf(outp, "%s%-8s", ((*printed)++ ? delim : ""), name));
+>>>>>>> hardened/6.19
 	else
+<<<<<<< HEAD
 		return sprintf(outp, "%s%s", sep, name);
+||||||| 05f7e89ab9731
+		return (sprintf(outp, "%s%s", (*printed++ ? delim : ""), name));
+=======
+		return (sprintf(outp, "%s%s", ((*printed)++ ? delim : ""), name));
+>>>>>>> hardened/6.19
 }
 
 static inline int print_hex_value(int width, int *printed, char *delim, unsigned long long value)
@@ -2885,25 +2897,54 @@ static inline int print_hex_value(int width, int *printed, char *delim, unsigned
 	char *sep = (*printed)++ ? delim : "";
 
 	if (width <= 32)
+<<<<<<< HEAD
 		return sprintf(outp, "%s%08llx", sep, value);
+||||||| 05f7e89ab9731
+		return (sprintf(outp, "%s%08x", (*printed++ ? delim : ""), (unsigned int)value));
+=======
+		return (sprintf(outp, "%s%08x", ((*printed)++ ? delim : ""), (unsigned int)value));
+>>>>>>> hardened/6.19
 	else
+<<<<<<< HEAD
 		return sprintf(outp, "%s%016llx", sep, value);
+||||||| 05f7e89ab9731
+		return (sprintf(outp, "%s%016llx", (*printed++ ? delim : ""), value));
+=======
+		return (sprintf(outp, "%s%016llx", ((*printed)++ ? delim : ""), value));
+>>>>>>> hardened/6.19
 }
 
 static inline int print_decimal_value(int width, int *printed, char *delim, unsigned long long value)
 {
+<<<<<<< HEAD
 	char *sep = (*printed)++ ? delim : "";
 
 	UNUSED(width);
 
 	return sprintf(outp, "%s%lld", sep, value);
+||||||| 05f7e89ab9731
+	if (width <= 32)
+		return (sprintf(outp, "%s%d", (*printed++ ? delim : ""), (unsigned int)value));
+	else
+		return (sprintf(outp, "%s%-8lld", (*printed++ ? delim : ""), value));
+=======
+	UNUSED(width);
+
+	return (sprintf(outp, "%s%lld", ((*printed)++ ? delim : ""), value));
+>>>>>>> hardened/6.19
 }
 
 static inline int print_float_value(int *printed, char *delim, double value)
 {
+<<<<<<< HEAD
 	char *sep = (*printed)++ ? delim : "";
 
 	return sprintf(outp, "%s%0.2f", sep, value);
+||||||| 05f7e89ab9731
+	return (sprintf(outp, "%s%0.2f", (*printed++ ? delim : ""), value));
+=======
+	return (sprintf(outp, "%s%0.2f", ((*printed)++ ? delim : ""), value));
+>>>>>>> hardened/6.19
 }
 
 void print_header(char *delim)
@@ -3210,11 +3251,17 @@ int dump_counters(PER_THREAD_PARAMS)
 
 		outp += sprintf(outp, "LLC refs: %lld", t->llc.references);
 		outp += sprintf(outp, "LLC miss: %lld", t->llc.misses);
+<<<<<<< HEAD
 		outp += sprintf(outp, "LLC Hit%%: %.2f", pct((t->llc.references - t->llc.misses), t->llc.references));
 
 		outp += sprintf(outp, "L2 refs: %lld", t->l2.references);
 		outp += sprintf(outp, "L2 hits: %lld", t->l2.hits);
 		outp += sprintf(outp, "L2 Hit%%: %.2f", pct(t->l2.hits, t->l2.references));
+||||||| 05f7e89ab9731
+		outp += sprintf(outp, "LLC Hit%%: %.2f", pct((t->llc.references - t->llc.misses) / t->llc.references));
+=======
+		outp += sprintf(outp, "LLC Hit%%: %.2f", pct((t->llc.references - t->llc.misses), t->llc.references));
+>>>>>>> hardened/6.19
 
 		for (i = 0, mp = sys.tp; mp; i++, mp = mp->next) {
 			outp += sprintf(outp, "tADDED [%d] %8s msr0x%x: %08llX %s\n", i, mp->name, mp->msr_num, t->counter[i], mp->sp->path);
@@ -3494,6 +3541,7 @@ int format_counters(PER_THREAD_PARAMS)
 	if (DO_BIC(BIC_LLC_MRPS))
 		outp += sprintf(outp, "%s%.0f", (printed++ ? delim : ""), t->llc.references / interval_float / 1000000);
 
+<<<<<<< HEAD
 	if (DO_BIC(BIC_LLC_HIT))
 		outp += sprintf(outp, fmt8, (printed++ ? delim : ""), pct((t->llc.references - t->llc.misses), t->llc.references));
 
@@ -3503,6 +3551,15 @@ int format_counters(PER_THREAD_PARAMS)
 
 	if (DO_BIC(BIC_L2_HIT))
 		outp += sprintf(outp, fmt8, (printed++ ? delim : ""), pct(t->l2.hits, t->l2.references));
+||||||| 05f7e89ab9731
+		if (DO_BIC(BIC_LLC_HIT))
+			outp += sprintf(outp, fmt8, (printed++ ? delim : ""), pct((t->llc.references - t->llc.misses) / t->llc.references));
+	}
+=======
+		if (DO_BIC(BIC_LLC_HIT))
+			outp += sprintf(outp, fmt8, (printed++ ? delim : ""), pct((t->llc.references - t->llc.misses), t->llc.references));
+	}
+>>>>>>> hardened/6.19
 
 	/* Added Thread Counters */
 	for (i = 0, mp = sys.tp; mp; i++, mp = mp->next) {
@@ -3542,13 +3599,29 @@ int format_counters(PER_THREAD_PARAMS)
 			break;
 
 		case PMT_TYPE_XTAL_TIME:
+<<<<<<< HEAD
 			value_converted = pct(value_raw / crystal_hz, interval_float);
 			outp += print_float_value(&printed, delim, value_converted);
+||||||| 05f7e89ab9731
+			value_converted = pct(value_raw / crystal_hz / interval_float);
+			outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), value_converted);
+=======
+			value_converted = pct(value_raw / crystal_hz, interval_float);
+			outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), value_converted);
+>>>>>>> hardened/6.19
 			break;
 
 		case PMT_TYPE_TCORE_CLOCK:
+<<<<<<< HEAD
 			value_converted = pct(value_raw / tcore_clock_freq_hz, interval_float);
 			outp += print_float_value(&printed, delim, value_converted);
+||||||| 05f7e89ab9731
+			value_converted = pct(value_raw / tcore_clock_freq_hz / interval_float);
+			outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), value_converted);
+=======
+			value_converted = pct(value_raw / tcore_clock_freq_hz, interval_float);
+			outp += sprintf(outp, "%s%.2f", (printed++ ? delim : ""), value_converted);
+>>>>>>> hardened/6.19
 		}
 	}
 

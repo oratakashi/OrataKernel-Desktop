@@ -1527,8 +1527,16 @@ error_bdev_put:
  * may still be modified, to something outside the range and should not
  * be used.
  */
+<<<<<<< HEAD
 bool btrfs_first_pending_extent(struct btrfs_device *device, u64 start, u64 len,
 				u64 *pending_start, u64 *pending_end)
+||||||| 05f7e89ab9731
+static bool contains_pending_extent(struct btrfs_device *device, u64 *start,
+				    u64 len)
+=======
+static bool first_pending_extent(struct btrfs_device *device, u64 start, u64 len,
+				 u64 *pending_start, u64 *pending_end)
+>>>>>>> hardened/6.19
 {
 	lockdep_assert_held(&device->fs_info->chunk_mutex);
 
@@ -1544,6 +1552,7 @@ bool btrfs_first_pending_extent(struct btrfs_device *device, u64 start, u64 len,
 	return false;
 }
 
+<<<<<<< HEAD
 /*
  * Find the first real hole accounting for pending extents.
  *
@@ -1662,6 +1671,127 @@ next:
 	return max_hole_len >= min_hole_size;
 }
 
+||||||| 05f7e89ab9731
+=======
+/*
+ * Find the first real hole accounting for pending extents.
+ *
+ * @device:         the device containing the candidate hole
+ * @start:          input/output pointer for the hole start position
+ * @len:            input/output pointer for the hole length
+ * @min_hole_size:  the size of hole we are looking for
+ *
+ * Given a potential hole specified by [*start, *start + *len), check for pending
+ * chunk allocations within that range. If pending extents are found, the hole is
+ * adjusted to represent the first true free space that is large enough when
+ * accounting for pending chunks.
+ *
+ * Note that this function must handle various cases involving non consecutive
+ * pending extents.
+ *
+ * Returns: true if a suitable hole was found and false otherwise.
+ * If the return value is true, then *start and *len are set to represent the hole.
+ * If the return value is false, then *start is set to the largest hole we
+ * found and *len is set to its length.
+ * If there are no holes at all, then *start is set to the end of the range and
+ * *len is set to 0.
+ */
+static bool find_hole_in_pending_extents(struct btrfs_device *device, u64 *start,
+					 u64 *len, u64 min_hole_size)
+{
+	u64 pending_start, pending_end;
+	u64 end;
+	u64 max_hole_start = 0;
+	u64 max_hole_len = 0;
+
+	lockdep_assert_held(&device->fs_info->chunk_mutex);
+
+	if (*len == 0)
+		return false;
+
+	end = *start + *len - 1;
+
+	/*
+	 * Loop until we either see a large enough hole or check every pending
+	 * extent overlapping the candidate hole.
+	 * At every hole that we observe, record it if it is the new max.
+	 * At the end of the iteration, set the output variables to the max hole.
+	 */
+	while (true) {
+		if (first_pending_extent(device, *start, *len, &pending_start, &pending_end)) {
+			/*
+			 * Case 1: the pending extent overlaps the start of
+			 * candidate hole. That means the true hole is after the
+			 * pending extent, but we need to find the next pending
+			 * extent to properly size the hole. In the next loop,
+			 * we will reduce to case 2 or 3.
+			 * e.g.,
+			 *
+			 *   |----pending A----|    real hole     |----pending B----|
+			 *            |           candidate hole        |
+			 *         *start                              end
+			 */
+			if (pending_start <= *start) {
+				*start = pending_end + 1;
+				goto next;
+			}
+			/*
+			 * Case 2: The pending extent starts after *start (and overlaps
+			 * [*start, end), so the first hole just goes up to the start
+			 * of the pending extent.
+			 * e.g.,
+			 *
+			 *   |    real hole    |----pending A----|
+			 *   |       candidate hole     |
+			 * *start                      end
+			 */
+			*len = pending_start - *start;
+			if (*len > max_hole_len) {
+				max_hole_start = *start;
+				max_hole_len = *len;
+			}
+			if (*len >= min_hole_size)
+				break;
+			/*
+			 * If the hole wasn't big enough, then we advance past
+			 * the pending extent and keep looking.
+			 */
+			*start = pending_end + 1;
+			goto next;
+		} else {
+			/*
+			 * Case 3: There is no pending extent overlapping the
+			 * range [*start, *start + *len - 1], so the only remaining
+			 * hole is the remaining range.
+			 * e.g.,
+			 *
+			 *   |       candidate hole           |
+			 *   |          real hole             |
+			 * *start                            end
+			 */
+
+			if (*len > max_hole_len) {
+				max_hole_start = *start;
+				max_hole_len = *len;
+			}
+			break;
+		}
+next:
+		if (*start > end)
+			break;
+		*len = end - *start + 1;
+	}
+	if (max_hole_len) {
+		*start = max_hole_start;
+		*len = max_hole_len;
+	} else {
+		*start = end + 1;
+		*len = 0;
+	}
+	return max_hole_len >= min_hole_size;
+}
+
+>>>>>>> hardened/6.19
 static u64 dev_extent_search_start(struct btrfs_device *device)
 {
 	switch (device->fs_devices->chunk_alloc_policy) {
@@ -1757,12 +1887,41 @@ static bool dev_extent_hole_check(struct btrfs_device *device, u64 *hole_start,
 
 	ASSERT(*hole_size > 0);
 
+<<<<<<< HEAD
 again:
 	*hole_size = hole_end - *hole_start + 1;
 	found = btrfs_find_hole_in_pending_extents(device, hole_start, hole_size, num_bytes);
 	if (!found)
 		return found;
 	ASSERT(*hole_size >= num_bytes);
+||||||| 05f7e89ab9731
+		switch (device->fs_devices->chunk_alloc_policy) {
+		default:
+			btrfs_warn_unknown_chunk_allocation(device->fs_devices->chunk_alloc_policy);
+			fallthrough;
+		case BTRFS_CHUNK_ALLOC_REGULAR:
+			/* No extra check */
+			break;
+		case BTRFS_CHUNK_ALLOC_ZONED:
+			if (dev_extent_hole_check_zoned(device, hole_start,
+							hole_size, num_bytes)) {
+				changed = true;
+				/*
+				 * The changed hole can contain pending extent.
+				 * Loop again to check that.
+				 */
+				continue;
+			}
+			break;
+		}
+=======
+again:
+	*hole_size = hole_end - *hole_start + 1;
+	found = find_hole_in_pending_extents(device, hole_start, hole_size, num_bytes);
+	if (!found)
+		return found;
+	ASSERT(*hole_size >= num_bytes);
+>>>>>>> hardened/6.19
 
 	switch (device->fs_devices->chunk_alloc_policy) {
 	default:
@@ -5214,7 +5373,13 @@ int btrfs_shrink_device(struct btrfs_device *device, u64 new_size)
 	 * in-memory chunks are synced to disk so that the loop below sees them
 	 * and relocates them accordingly.
 	 */
+<<<<<<< HEAD
 	if (btrfs_first_pending_extent(device, start, diff, &pending_start, &pending_end)) {
+||||||| 05f7e89ab9731
+	if (contains_pending_extent(device, &start, diff)) {
+=======
+	if (first_pending_extent(device, start, diff, &pending_start, &pending_end)) {
+>>>>>>> hardened/6.19
 		mutex_unlock(&fs_info->chunk_mutex);
 		ret = btrfs_commit_transaction(trans);
 		if (ret)

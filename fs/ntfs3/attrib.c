@@ -482,9 +482,15 @@ again:
 	align = sbi->cluster_size;
 	if (is_ext) {
 		align <<= attr_b->nres.c_unit;
+<<<<<<< HEAD
 		keep_prealloc = false;
 		da = false;
 	}
+||||||| 05f7e89ab9731
+=======
+		keep_prealloc = false;
+	}
+>>>>>>> hardened/6.19
 
 	old_valid = le64_to_cpu(attr_b->nres.valid_size);
 	old_size = le64_to_cpu(attr_b->nres.data_size);
@@ -1481,10 +1487,33 @@ int attr_load_runs_range(struct ntfs_inode *ni, enum ATTR_TYPE type,
 	int retry = 0;
 
 	for (vcn = from >> cluster_bits; vcn <= vcn_last; vcn += clen) {
+<<<<<<< HEAD
 		if (run_lookup_entry(run, vcn, &lcn, &clen, NULL)) {
 			retry = 0;
 			continue;
+||||||| 05f7e89ab9731
+		if (!run_lookup_entry(run, vcn, &lcn, &clen, NULL)) {
+			err = attr_load_runs_vcn(ni, type, name, name_len, run,
+						 vcn);
+			if (err)
+				return err;
+			clen = 0; /* Next run_lookup_entry(vcn) must be success. */
+=======
+		if (!run_lookup_entry(run, vcn, &lcn, &clen, NULL)) {
+			if (retry != 0) { /* Next run_lookup_entry(vcn) also failed. */
+				err = -EINVAL;
+				break;
+			}
+			err = attr_load_runs_vcn(ni, type, name, name_len, run,
+						 vcn);
+			if (err)
+				break;
+
+			clen = 0; /* Next run_lookup_entry(vcn) must be success. */
+			retry++;
+>>>>>>> hardened/6.19
 		}
+<<<<<<< HEAD
 		if (retry) {
 			err = -EINVAL;
 			break;
@@ -1495,6 +1524,11 @@ int attr_load_runs_range(struct ntfs_inode *ni, enum ATTR_TYPE type,
 
 		clen = 0; /* Next run_lookup_entry(vcn) must be success. */
 		retry++;
+||||||| 05f7e89ab9731
+=======
+		else
+			retry = 0;
+>>>>>>> hardened/6.19
 	}
 
 	return err;

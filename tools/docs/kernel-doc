@@ -192,10 +192,30 @@ class MsgFormatter(logging.Formatter):
         return logging.Formatter.format(self, record)
 
 def main():
+<<<<<<< HEAD:tools/docs/kernel-doc
     """
     Main program.
 
     """
+||||||| 05f7e89ab9731:scripts/kernel-doc.py
+    """Main program"""
+=======
+    """
+    Main program.
+
+    By default, the return value is:
+
+    - 0: success or Python version is not compatible with
+      kernel-doc.  If -Werror is not used, it will also
+      return 0 if there are issues at kernel-doc markups;
+
+    - 1: an abnormal condition happened;
+
+    - 2: argparse issued an error;
+
+    - 3: -Werror is used, and one or more unfiltered parse warnings happened.
+    """
+>>>>>>> hardened/6.19:scripts/kernel-doc.py
 
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,
                                      description=DESC, epilog=EPILOG)

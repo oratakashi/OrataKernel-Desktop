@@ -878,6 +878,9 @@ static inline struct folio *page_rmappable_folio(struct page *page)
 	return folio;
 }
 
+extern void __init __gather_extra_latent_entropy(struct page *page,
+						 unsigned int nr_pages);
+
 static inline void prep_compound_head(struct page *page, unsigned int order)
 {
 	struct folio *folio = (struct folio *)page;
@@ -920,6 +923,7 @@ void post_alloc_hook(struct page *page, unsigned int order, gfp_t gfp_flags);
 extern bool free_pages_prepare(struct page *page, unsigned int order);
 
 extern int user_min_free_kbytes;
+extern atomic_long_t kswapd_waiters;
 
 struct page *__alloc_frozen_pages_noprof(gfp_t, unsigned int order, int nid,
 		nodemask_t *);

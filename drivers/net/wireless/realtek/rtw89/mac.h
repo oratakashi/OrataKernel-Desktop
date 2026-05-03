@@ -1046,11 +1046,16 @@ struct rtw89_mac_gen_def {
 			    enum rtw89_mac_hwmod_sel sel);
 	int (*sys_init)(struct rtw89_dev *rtwdev);
 	int (*trx_init)(struct rtw89_dev *rtwdev);
+<<<<<<< HEAD
 	int (*preload_init)(struct rtw89_dev *rtwdev, u8 mac_idx,
 			    enum rtw89_qta_mode mode);
 	void (*clr_aon_intr)(struct rtw89_dev *rtwdev);
 	void (*err_imr_ctrl)(struct rtw89_dev *rtwdev, bool en);
 	int (*mac_func_en)(struct rtw89_dev *rtwdev);
+||||||| 05f7e89ab9731
+=======
+	void (*err_imr_ctrl)(struct rtw89_dev *rtwdev, bool en);
+>>>>>>> hardened/6.19
 	void (*hci_func_en)(struct rtw89_dev *rtwdev);
 	void (*dmac_func_pre_en)(struct rtw89_dev *rtwdev);
 	void (*dle_func_en)(struct rtw89_dev *rtwdev, bool enable);

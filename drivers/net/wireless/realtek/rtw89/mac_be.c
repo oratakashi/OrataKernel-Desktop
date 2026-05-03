@@ -3200,10 +3200,15 @@ const struct rtw89_mac_gen_def rtw89_mac_gen_be = {
 	.check_mac_en = rtw89_mac_check_mac_en_be,
 	.sys_init = sys_init_be,
 	.trx_init = trx_init_be,
+<<<<<<< HEAD
 	.preload_init = preload_init_be,
 	.clr_aon_intr = clr_aon_intr_be,
 	.err_imr_ctrl = err_imr_ctrl_be,
 	.mac_func_en = mac_func_en_be,
+||||||| 05f7e89ab9731
+=======
+	.err_imr_ctrl = err_imr_ctrl_be,
+>>>>>>> hardened/6.19
 	.hci_func_en = rtw89_mac_hci_func_en_be,
 	.dmac_func_pre_en = rtw89_mac_dmac_func_pre_en_be,
 	.dle_func_en = dle_func_en_be,

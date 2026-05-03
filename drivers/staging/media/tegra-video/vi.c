@@ -481,6 +481,22 @@ static int __tegra_channel_try_format(struct tegra_vi_channel *chan,
 			try_crop->width = 0;
 			try_crop->height = 0;
 		} else {
+<<<<<<< HEAD
+||||||| 05f7e89ab9731
+			ret = v4l2_subdev_call(subdev, pad, get_selection,
+					       NULL, &sdsel);
+			if (ret)
+				return -EINVAL;
+
+=======
+			ret = v4l2_subdev_call(subdev, pad, get_selection,
+					       NULL, &sdsel);
+			if (ret) {
+				ret = -EINVAL;
+				goto out_free;
+			}
+
+>>>>>>> hardened/6.19
 			try_crop->width = sdsel.r.width;
 			try_crop->height = sdsel.r.height;
 		}

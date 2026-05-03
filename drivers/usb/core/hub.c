@@ -5448,6 +5448,12 @@ static void hub_port_connect(struct usb_hub *hub, int port1, u16 portstatus,
 			goto done;
 		return;
 	}
+
+	if (deny_new_usb) {
+		dev_err(&port_dev->dev, "denied insert of USB device on port %d\n", port1);
+		goto done;
+	}
+
 	if (hub_is_superspeed(hub->hdev))
 		unit_load = 150;
 	else
@@ -5893,6 +5899,13 @@ static void hub_event(struct work_struct *work)
 			/* NOTE: expects max 15 ports... */
 			(u16) hub->change_bits[0],
 			(u16) hub->event_bits[0]);
+
+	/* Don't disconnect USB-SATA on TrimSlice */
+	if (strcmp(dev_name(hdev->bus->controller), "tegra-ehci.0") == 0) {
+		if ((hdev->state == 7) && (hub->change_bits[0] == 0) &&
+				(hub->event_bits[0] == 0x2))
+			hub->event_bits[0] = 0;
+	}
 
 	/* Lock the device, then check to see if we were
 	 * disconnected while waiting for the lock to succeed. */

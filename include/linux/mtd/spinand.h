@@ -290,6 +290,12 @@
 		   SPI_MEM_OP_NO_DUMMY,					\
 		   SPI_MEM_OP_NO_DATA)
 
+#define SPINAND_PAGE_READ_PACKED_8D_8D_0_OP(addr)			\
+	SPI_MEM_OP(SPI_MEM_DTR_OP_PACKED_CMD(0x13, addr >> 16, 8),	\
+		   SPI_MEM_DTR_OP_ADDR(2, addr & 0xffff, 8),		\
+		   SPI_MEM_OP_NO_DUMMY,					\
+		   SPI_MEM_OP_NO_DATA)
+
 #define SPINAND_PAGE_READ_FROM_CACHE_8D_8D_8D_OP(addr, ndummy, buf, len, freq) \
 	SPI_MEM_OP(SPI_MEM_DTR_OP_RPT_CMD(0x9d, 8),			\
 		   SPI_MEM_DTR_OP_ADDR(2, addr, 8),			\
@@ -358,7 +364,13 @@ struct spinand_device;
 
 /**
  * struct spinand_id - SPI NAND id structure
+<<<<<<< HEAD
  * @data: buffer containing the id bytes. Currently 6 bytes large, but can
+||||||| 05f7e89ab9731
+ * @data: buffer containing the id bytes. Currently 4 bytes large, but can
+=======
+ * @data: buffer containing the id bytes. Currently 5 bytes large, but can
+>>>>>>> hardened/6.19
  *	  be extended if required
  * @len: ID length
  */
@@ -483,6 +495,7 @@ struct spinand_ecc_info {
 #define SPINAND_HAS_PROG_PLANE_SELECT_BIT		BIT(2)
 #define SPINAND_HAS_READ_PLANE_SELECT_BIT		BIT(3)
 #define SPINAND_NO_RAW_ACCESS				BIT(4)
+#define SPINAND_ODTR_PACKED_PAGE_READ			BIT(5)
 
 /**
  * struct spinand_ondie_ecc_conf - private SPI-NAND on-die ECC engine structure

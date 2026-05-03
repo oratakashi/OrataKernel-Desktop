@@ -227,9 +227,35 @@ static int cros_typec_register_switches(struct cros_typec_switch_data *sdata)
 			goto err_switch;
 		}
 
+<<<<<<< HEAD
 		ret = acpi_get_local_u64_address(ACPI_HANDLE_FWNODE(fwnode), &index);
 		if (ret) {
 			dev_err(dev, "_ADR wasn't evaluated for %pfwP\n", fwnode);
+||||||| 05f7e89ab9731
+		adev = to_acpi_device_node(fwnode);
+		if (!adev) {
+			dev_err(fwnode->dev, "Couldn't get ACPI device handle\n");
+			ret = -ENODEV;
+			goto err_switch;
+		}
+
+		ret = acpi_evaluate_integer(adev->handle, "_ADR", NULL, &index);
+		if (ACPI_FAILURE(ret)) {
+			dev_err(fwnode->dev, "_ADR wasn't evaluated\n");
+			ret = -ENODATA;
+=======
+		adev = to_acpi_device_node(fwnode);
+		if (!adev) {
+			dev_err(dev, "Couldn't get ACPI device handle for %pfwP\n", fwnode);
+			ret = -ENODEV;
+			goto err_switch;
+		}
+
+		ret = acpi_evaluate_integer(adev->handle, "_ADR", NULL, &index);
+		if (ACPI_FAILURE(ret)) {
+			dev_err(dev, "_ADR wasn't evaluated for %pfwP\n", fwnode);
+			ret = -ENODATA;
+>>>>>>> hardened/6.19
 			goto err_switch;
 		}
 

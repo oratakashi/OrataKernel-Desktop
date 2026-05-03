@@ -89,7 +89,6 @@ int cifs_handle_standard(struct TCP_Server_Info *server,
 			 struct mid_q_entry *mid);
 char *smb3_fs_context_fullpath(const struct smb3_fs_context *ctx, char dirsep);
 int smb3_parse_devname(const char *devname, struct smb3_fs_context *ctx);
-int smb3_parse_opt(const char *options, const char *key, char **val);
 int cifs_ipaddr_cmp(struct sockaddr *srcaddr, struct sockaddr *rhs);
 bool cifs_match_ipaddr(struct sockaddr *srcaddr, struct sockaddr *rhs);
 int cifs_discard_remaining_data(struct TCP_Server_Info *server);
@@ -264,8 +263,15 @@ void cifs_close_deferred_file(struct cifsInodeInfo *cifs_inode);
 
 void cifs_close_all_deferred_files(struct cifs_tcon *tcon);
 
+<<<<<<< HEAD
 void cifs_close_all_deferred_files_sb(struct cifs_sb_info *cifs_sb);
 void cifs_close_deferred_file_under_dentry(struct cifs_tcon *tcon,
+||||||| 05f7e89ab9731
+void cifs_close_deferred_file_under_dentry(struct cifs_tcon *cifs_tcon,
+=======
+void cifs_close_all_deferred_files_sb(struct cifs_sb_info *cifs_sb);
+void cifs_close_deferred_file_under_dentry(struct cifs_tcon *cifs_tcon,
+>>>>>>> hardened/6.19
 					   struct dentry *dentry);
 
 void cifs_mark_open_handles_for_deleted_file(struct inode *inode,

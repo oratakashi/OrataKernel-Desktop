@@ -1632,7 +1632,7 @@ static inline void perf_event_task_migrate(struct task_struct *task)
 		task->sched_migrated = 1;
 }
 
-static inline void perf_event_task_sched_in(struct task_struct *prev,
+static __always_inline void perf_event_task_sched_in(struct task_struct *prev,
 					    struct task_struct *task)
 {
 	if (static_branch_unlikely(&perf_sched_events))
@@ -1791,6 +1791,14 @@ static inline int perf_is_paranoid(void)
 }
 
 extern int perf_allow_kernel(void);
+
+static inline int perf_allow_open(void)
+{
+	if (sysctl_perf_event_paranoid > 2 && !perfmon_capable())
+		return -EACCES;
+
+	return security_perf_event_open(PERF_SECURITY_OPEN);
+}
 
 static inline int perf_allow_cpu(void)
 {

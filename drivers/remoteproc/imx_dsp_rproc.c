@@ -1260,6 +1260,7 @@ static int imx_dsp_suspend(struct device *dev)
 	if (rproc->state != RPROC_RUNNING)
 		goto out;
 
+<<<<<<< HEAD
 	/*
 	 * No channel available for sending messages;
 	 * indicates no mailboxes present, so trigger PM runtime suspend
@@ -1275,6 +1276,18 @@ static int imx_dsp_suspend(struct device *dev)
 		goto out;
 	}
 
+||||||| 05f7e89ab9731
+=======
+	/*
+	 * No channel available for sending messages;
+	 * indicates no mailboxes present, so trigger PM runtime suspend
+	 */
+	if (!priv->tx_ch) {
+		dev_dbg(dev, "No initialized mbox tx channel, suspend directly.\n");
+		goto out;
+	}
+
+>>>>>>> hardened/6.19
 	reinit_completion(&priv->pm_comp);
 
 	/* Tell DSP that suspend is happening */

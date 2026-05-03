@@ -498,6 +498,7 @@ static struct range range_refine(enum num_t x_t, struct range x, enum num_t y_t,
 	 */
 	if (x_t == S64 && y_t == S32 && y_cast.a <= S32_MAX  && y_cast.b <= S32_MAX &&
 	    (s64)x.a >= S32_MIN && (s64)x.b <= S32_MAX)
+<<<<<<< HEAD
 		return range_intersection(x_t, x, y_cast);
 
 	if (y_t == U32 && x_t == U64) {
@@ -532,6 +533,11 @@ static struct range range_refine(enum num_t x_t, struct range x, enum num_t y_t,
 				return range(x_t, x.a, x.a);
 		}
 	}
+||||||| 05f7e89ab9731
+		return range_improve(x_t, x, y_cast);
+=======
+		return range_intersection(x_t, x, y_cast);
+>>>>>>> hardened/6.19
 
 	/* the case when new range knowledge, *y*, is a 32-bit subregister
 	 * range, while previous range knowledge, *x*, is a full register
@@ -549,7 +555,41 @@ static struct range range_refine(enum num_t x_t, struct range x, enum num_t y_t,
 		x_swap = range(x_t, swap_low32(x.a, y_cast.a), swap_low32(x.b, y_cast.b));
 		if (!is_valid_range(x_t, x_swap))
 			return x;
+<<<<<<< HEAD
 		return range_intersection(x_t, x, x_swap);
+||||||| 05f7e89ab9731
+		return range_improve(x_t, x, x_swap);
+	}
+
+	if (!t_is_32(x_t) && !t_is_32(y_t) && x_t != y_t) {
+		if (x_t == S64 && x.a > x.b) {
+			if (x.b < y.a && x.a <= y.b)
+				return range(x_t, x.a, y.b);
+			if (x.a > y.b && x.b >= y.a)
+				return range(x_t, y.a, x.b);
+		} else if (x_t == U64 && y.a > y.b) {
+			if (y.b < x.a && y.a <= x.b)
+				return range(x_t, y.a, x.b);
+			if (y.a > x.b && y.b >= x.a)
+				return range(x_t, x.a, y.b);
+		}
+=======
+		return range_intersection(x_t, x, x_swap);
+	}
+
+	if (!t_is_32(x_t) && !t_is_32(y_t) && x_t != y_t) {
+		if (x_t == S64 && x.a > x.b) {
+			if (x.b < y.a && x.a <= y.b)
+				return range(x_t, x.a, y.b);
+			if (x.a > y.b && x.b >= y.a)
+				return range(x_t, y.a, x.b);
+		} else if (x_t == U64 && y.a > y.b) {
+			if (y.b < x.a && y.a <= x.b)
+				return range(x_t, y.a, x.b);
+			if (y.a > x.b && y.b >= x.a)
+				return range(x_t, x.a, y.b);
+		}
+>>>>>>> hardened/6.19
 	}
 
 	/* otherwise, plain range cast and intersection works */

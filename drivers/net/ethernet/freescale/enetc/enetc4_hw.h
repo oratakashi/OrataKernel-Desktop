@@ -158,6 +158,7 @@
 
 /* Port operational register */
 #define ENETC4_POR			0x4100
+<<<<<<< HEAD
 #define  POR_TXDIS			BIT(0)
 #define  POR_RXDIS			BIT(1)
 
@@ -176,6 +177,15 @@
 
 /* Port Rx discard count reason register 1 */
 #define ENETC4_PRXDCRR1			0x41cc
+||||||| 05f7e89ab9731
+=======
+#define  POR_TXDIS			BIT(0)
+#define  POR_RXDIS			BIT(1)
+
+/* Port status register */
+#define ENETC4_PSR			0x4104
+#define  PSR_RX_BUSY			BIT(1)
+>>>>>>> hardened/6.19
 
 /* Port traffic class a transmit maximum SDU register */
 #define ENETC4_PTCTMSDUR(a)		((a) * 0x20 + 0x4208)

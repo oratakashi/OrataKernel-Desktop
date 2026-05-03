@@ -102,10 +102,20 @@ static int parse_fixed_partitions(struct mtd_info *master,
 		return 0;
 	}
 
+<<<<<<< HEAD
 	parts = kzalloc_objs(*parts, nr_parts);
 	if (!parts) {
 		if (dedicated)
 			of_node_put(ofpart_node);
+||||||| 05f7e89ab9731
+	parts = kcalloc(nr_parts, sizeof(*parts), GFP_KERNEL);
+	if (!parts)
+=======
+	parts = kcalloc(nr_parts, sizeof(*parts), GFP_KERNEL);
+	if (!parts) {
+		if (dedicated)
+			of_node_put(ofpart_node);
+>>>>>>> hardened/6.19
 		return -ENOMEM;
 	}
 
@@ -198,8 +208,16 @@ ofpart_fail:
 	of_node_put(pp);
 	ret = -EINVAL;
 ofpart_none:
+<<<<<<< HEAD
 	if (dedicated)
 		of_node_put(ofpart_node);
+||||||| 05f7e89ab9731
+	of_node_put(pp);
+=======
+	if (dedicated)
+		of_node_put(ofpart_node);
+	of_node_put(pp);
+>>>>>>> hardened/6.19
 	kfree(parts);
 	return ret;
 }

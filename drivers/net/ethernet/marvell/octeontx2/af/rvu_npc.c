@@ -1134,12 +1134,27 @@ void rvu_npc_update_flowkey_alg_idx(struct rvu *rvu, u16 pcifunc, int nixlf,
 	action.index = group;
 	action.flow_key_alg = alg_idx;
 
+<<<<<<< HEAD
 	rvu_write64(rvu, blkaddr, reg, *(u64 *)&action);
 	/* update the VF flow rule action with the VF default entry action */
 	if (mcam_index < 0)
 		npc_update_vf_flow_entry(rvu, mcam, blkaddr, pcifunc,
 					 *(u64 *)&action);
 
+||||||| 05f7e89ab9731
+	rvu_write64(rvu, blkaddr,
+		    NPC_AF_MCAMEX_BANKX_ACTION(index, bank), *(u64 *)&action);
+
+	/* update the VF flow rule action with the VF default entry action */
+	if (mcam_index < 0)
+		npc_update_vf_flow_entry(rvu, mcam, blkaddr, pcifunc,
+					 *(u64 *)&action);
+
+=======
+	rvu_write64(rvu, blkaddr,
+		    NPC_AF_MCAMEX_BANKX_ACTION(index, bank), *(u64 *)&action);
+
+>>>>>>> hardened/6.19
 	/* update the action change in default rule */
 	pfvf = rvu_get_pfvf(rvu, pcifunc);
 	if (pfvf->def_ucast_rule)

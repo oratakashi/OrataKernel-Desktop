@@ -1,0 +1,734 @@
+# ============================================================
+# OrataKernel Build Workflow
+# Target : Lenovo ThinkPad L13
+# Trigger: Manual only (workflow_dispatch)
+# ============================================================
+name: Build Kernel
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (build only, skip release & PR)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build:
+    name: Build OrataKernel
+    runs-on: ubuntu-latest
+
+    steps:
+      # ─── Checkout ─────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      # ─── Read version from Makefile ────────────────────────────────
+      # Read VERSION, PATCHLEVEL, SUBLEVEL directly from the Makefile
+      # to avoid hardcoding and stay in sync with the source tree.
+      - name: Read version variables from Makefile
+        id: makefile_ver
+        run: |
+          extract() {
+            grep -E "^${1} = " Makefile | head -1 | awk '{print $3}'
+          }
+
+          VER=$(extract VERSION)
+          PATCH=$(extract PATCHLEVEL)
+          SUB=$(extract SUBLEVEL)
+
+          if [[ -z "$VER" || -z "$PATCH" || -z "$SUB" ]]; then
+            echo "❌ Failed to read VERSION/PATCHLEVEL/SUBLEVEL from Makefile"
+            exit 1
+          fi
+
+          echo "version=${VER}"   >> "$GITHUB_OUTPUT"
+          echo "patchlevel=${PATCH}" >> "$GITHUB_OUTPUT"
+          echo "sublevel=${SUB}"  >> "$GITHUB_OUTPUT"
+          echo "base_ver=${VER}.${PATCH}.${SUB}" >> "$GITHUB_OUTPUT"
+
+          echo "✅ Makefile version: ${VER}.${PATCH}.${SUB}"
+
+      # ─── Auto-increment versioning ─────────────────────────────────
+      # Format: {VERSION}.{PATCHLEVEL}.{SUBLEVEL}-rc1-OrataKernel-1.0.{N}-zen
+      # Increment N is derived from the highest existing tag in the repo.
+      - name: Determine next increment
+        id: version
+        run: |
+          BASE="${{ steps.makefile_ver.outputs.base_ver }}"
+          PREFIX="${BASE}-rc1-OrataKernel-1.0."
+          SUFFIX="-zen"
+
+          git fetch --tags
+
+          # Find matching tags and extract the highest increment number
+          LATEST=$(git tag --list "${PREFIX}*${SUFFIX}" \
+            | sed "s/^${PREFIX}//;s/${SUFFIX}$//" \
+            | grep -E '^[0-9]+$' \
+            | sort -n \
+            | tail -1)
+
+          # Start from 0 if no matching tag exists yet
+          N=$([ -z "$LATEST" ] && echo 0 || echo $(( LATEST + 1 )))
+
+          # Version components
+          TAG="${PREFIX}${N}${SUFFIX}"
+          EXTRAVERSION="-rc1-OrataKernel-1.0.${N}-zen"
+
+          # KERNEL_RELEASE = the version string reported by `uname -r`.
+          # Linux appends "+" when there are uncommitted changes at build time,
+          # but the CI working tree is clean so there is no "+".
+          # We set LOCALVERSION explicitly to make the result deterministic.
+          KERNEL_RELEASE="${BASE}${EXTRAVERSION}"
+
+          echo "increment=${N}"                   >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}"                        >> "$GITHUB_OUTPUT"
+          echo "extraversion=${EXTRAVERSION}"      >> "$GITHUB_OUTPUT"
+          echo "kernel_release=${KERNEL_RELEASE}"  >> "$GITHUB_OUTPUT"
+
+          echo "✅ Next tag      : ${TAG}"
+          echo "✅ EXTRAVERSION  : ${EXTRAVERSION}"
+          echo "✅ KERNEL_RELEASE: ${KERNEL_RELEASE}"
+
+      # ─── APT cache ─────────────────────────────────────────────────
+      # Cache downloaded .deb packages to skip re-downloading on repeat runs.
+      - name: Cache APT packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives/*.deb
+          key: apt-build-deps-${{ runner.os }}-${{ hashFiles('.github/workflows/build-kernel.yml') }}
+          restore-keys: |
+            apt-build-deps-${{ runner.os }}-
+
+      # ─── Dependencies ──────────────────────────────────────────────
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            build-essential bc bison flex \
+            libelf-dev libssl-dev libncurses-dev \
+            dwarves pahole cpio zip git \
+            gcc make perl python3 \
+            dracut kmod ccache
+
+      # ─── ccache ────────────────────────────────────────────────────
+      # Cache the ccache directory between runs so unchanged source files
+      # are not recompiled, significantly reducing build time.
+      - name: Cache ccache directory
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ccache-kernel-${{ runner.os }}-${{ hashFiles('lenovo-thinkpad-l13-config') }}-${{ github.sha }}
+          restore-keys: |
+            ccache-kernel-${{ runner.os }}-${{ hashFiles('lenovo-thinkpad-l13-config') }}-
+            ccache-kernel-${{ runner.os }}-
+
+      - name: Configure ccache
+        run: |
+          ccache --max-size=5G
+          ccache --zero-stats
+          echo "CCACHE_DIR=$HOME/.ccache" >> "$GITHUB_ENV"
+          echo "/usr/lib/ccache" >> "$GITHUB_PATH"
+          echo "✅ ccache configured (max size: 5 GB)"
+
+      # ─── Kernel Config ─────────────────────────────────────────────
+      - name: Apply kernel config
+        run: |
+          if [[ ! -f lenovo-thinkpad-l13-config ]]; then
+            echo "❌ lenovo-thinkpad-l13-config not found"
+            exit 1
+          fi
+          cp lenovo-thinkpad-l13-config .config
+          # Pass EXTRAVERSION via environment to avoid patching the Makefile at build time
+          make ARCH=x86_64 \
+            EXTRAVERSION="${{ steps.version.outputs.extraversion }}" \
+            olddefconfig
+
+      # ─── Build ─────────────────────────────────────────────────────
+      - name: Build kernel, bzImage, and modules
+        run: |
+          make ARCH=x86_64 \
+            CC="ccache gcc" \
+            EXTRAVERSION="${{ steps.version.outputs.extraversion }}" \
+            LOCALVERSION="" \
+            -j$(nproc) \
+            bzImage modules
+
+          # Verify that the kernel release string matches the expected value
+          ACTUAL=$(cat include/config/kernel.release 2>/dev/null || strings arch/x86/boot/bzImage | grep -m1 "Linux version" | awk '{print $3}')
+          EXPECTED="${{ steps.version.outputs.kernel_release }}"
+          echo "✅ Kernel release built: ${ACTUAL}"
+          if [[ "${ACTUAL}" != "${EXPECTED}" ]]; then
+            echo "⚠️  WARNING: kernel release '${ACTUAL}' != expected '${EXPECTED}'"
+            echo "   Using the actual value from the build for consistency."
+          fi
+          # Store the actual value so all subsequent steps remain consistent
+          echo "KERNEL_RELEASE_ACTUAL=${ACTUAL}" >> "$GITHUB_ENV"
+
+          # Print ccache statistics for this run
+          ccache --show-stats
+
+      # ─── Staging: real filesystem layout ───────────────────────────
+      # Layout:
+      #   staging/
+      #   ├── boot/
+      #   │   ├── vmlinuz-{KERNEL_RELEASE}       ← bzImage loaded by the bootloader
+      #   │   ├── vmlinux-{KERNEL_RELEASE}        ← uncompressed image for debugging
+      #   │   ├── System.map-{KERNEL_RELEASE}     ← kernel symbol map
+      #   │   ├── config-{KERNEL_RELEASE}         ← Kconfig used at build time
+      #   │   └── initramfs-{KERNEL_RELEASE}.img  ← initial RAM filesystem
+      #   ├── lib/
+      #   │   └── modules/{KERNEL_RELEASE}/       ← kernel modules (debug symbols stripped)
+      #   └── install.sh                          ← installer script (mirrors `sudo make install`)
+      - name: Install kernel to staging directory
+        run: |
+          KR="${KERNEL_RELEASE_ACTUAL}"
+          STAGING="$(pwd)/staging"
+
+          mkdir -p "${STAGING}/boot"
+          mkdir -p "${STAGING}/lib/modules"
+
+          echo "📦 Staging kernel files for release: ${KR}"
+
+          cp arch/x86/boot/bzImage    "${STAGING}/boot/vmlinuz-${KR}"
+          cp vmlinux                  "${STAGING}/boot/vmlinux-${KR}"
+          cp System.map               "${STAGING}/boot/System.map-${KR}"
+          cp .config                  "${STAGING}/boot/config-${KR}"
+
+          # Install modules with debug symbols stripped (smaller and safer for distribution)
+          make ARCH=x86_64 \
+            EXTRAVERSION="${{ steps.version.outputs.extraversion }}" \
+            LOCALVERSION="" \
+            INSTALL_MOD_PATH="${STAGING}" \
+            INSTALL_MOD_STRIP=1 \
+            modules_install
+
+          echo "✅ Staging complete:"
+          find "${STAGING}" -type f | sort
+
+      # ─── Generate initramfs ─────────────────────────────────────────
+      # Use --kmoddir so dracut does not require modules installed to the
+      # runner's system directories. This avoids the "sudo cp modules to /lib/" anti-pattern.
+      - name: Generate initramfs
+        run: |
+          KR="${KERNEL_RELEASE_ACTUAL}"
+          STAGING="$(pwd)/staging"
+          MOD_DIR="${STAGING}/lib/modules/${KR}"
+
+          if [[ ! -d "${MOD_DIR}" ]]; then
+            echo "❌ Module directory not found: ${MOD_DIR}"
+            ls "${STAGING}/lib/modules/" || true
+            exit 1
+          fi
+
+          sudo dracut \
+            --force \
+            --kver "${KR}" \
+            --kmoddir "${MOD_DIR}" \
+            --add "base rootfs-block kernel-modules" \
+            --no-hostonly \
+            "${STAGING}/boot/initramfs-${KR}.img"
+
+          # Fix ownership: dracut runs as root; transfer the file back to the runner user
+          sudo chown "${USER}:${USER}" "${STAGING}/boot/initramfs-${KR}.img"
+          sudo chmod 644 "${STAGING}/boot/initramfs-${KR}.img"
+
+          echo "✅ initramfs generated: $(du -sh "${STAGING}/boot/initramfs-${KR}.img")"
+
+      - name: Verify staging file permissions
+        run: |
+          echo "🔍 Checking for root-owned files in staging..."
+          ROOT_FILES=$(find "$(pwd)/staging" -not -readable 2>/dev/null || true)
+          if [[ -n "${ROOT_FILES}" ]]; then
+            echo "⚠️  Unreadable files found:"
+            echo "${ROOT_FILES}"
+            sudo chown -R "${USER}:${USER}" "$(pwd)/staging"
+            echo "✅ Ownership fixed for all files in staging"
+          else
+            echo "✅ All files are readable"
+          fi
+
+      # ─── Generate install.sh ────────────────────────────────────────
+      # Mimics the UX of `sudo make install` from a vanilla kernel tree.
+      # The script auto-detects systemd-boot and GRUB.
+      - name: Generate install.sh
+        run: |
+          KR="${KERNEL_RELEASE_ACTUAL}"
+          TAG="${{ steps.version.outputs.tag }}"
+          STAGING="$(pwd)/staging"
+
+          cat > "${STAGING}/install.sh" << INSTALL_EOF
+          #!/usr/bin/env bash
+          # ============================================================
+          # OrataKernel Installer — Lenovo ThinkPad L13
+          # Version : ${TAG}
+          #
+          # Usage   : sudo bash install.sh
+          #           (or: sudo make install — when run from the same
+          #            directory as the kernel Makefile)
+          #
+          # Behavior:
+          #   1. Back up the active kernel to /boot/orata-backup-{timestamp}/
+          #   2. Install vmlinuz, vmlinux, System.map, config, initramfs
+          #   3. Install kernel modules to /lib/modules/
+          #   4. Run depmod -a
+          #   5. Update the bootloader (systemd-boot or GRUB) automatically
+          # ============================================================
+          set -euo pipefail
+
+          # ── Root check ──────────────────────────────────────────────
+          if [[ \$EUID -ne 0 ]]; then
+            echo "❌ This script must be run as root."
+            echo "   Use: sudo bash install.sh"
+            exit 1
+          fi
+
+          SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
+          KR="${KR}"
+          BOOT_DIR="/boot"
+          MOD_DIR="/lib/modules"
+
+          echo ""
+          echo "╔══════════════════════════════════════════════════════╗"
+          echo "║          OrataKernel Installer                       ║"
+          echo "║  Version : ${TAG}"
+          echo "║  Kernel  : \${KR}"
+          echo "╚══════════════════════════════════════════════════════╝"
+          echo ""
+
+          # ── Verify required files ────────────────────────────────────
+          REQUIRED_FILES=(
+            "\${SCRIPT_DIR}/boot/vmlinuz-\${KR}"
+            "\${SCRIPT_DIR}/boot/vmlinux-\${KR}"
+            "\${SCRIPT_DIR}/boot/System.map-\${KR}"
+            "\${SCRIPT_DIR}/boot/config-\${KR}"
+            "\${SCRIPT_DIR}/boot/initramfs-\${KR}.img"
+          )
+          for f in "\${REQUIRED_FILES[@]}"; do
+            if [[ ! -f "\$f" ]]; then
+              echo "❌ Required file not found: \$f"
+              exit 1
+            fi
+          done
+          echo "✅ All required release files are present."
+
+          # ── Back up the existing kernel ──────────────────────────────
+          BACKUP_DIR="\${BOOT_DIR}/orata-backup-\$(date +%Y%m%d_%H%M%S)"
+          mkdir -p "\${BACKUP_DIR}"
+          echo "📦 Backing up existing kernel to \${BACKUP_DIR} ..."
+          cp /boot/vmlinuz-*     "\${BACKUP_DIR}/" 2>/dev/null || true
+          cp /boot/initramfs-*   "\${BACKUP_DIR}/" 2>/dev/null || true
+          cp /boot/System.map-*  "\${BACKUP_DIR}/" 2>/dev/null || true
+          echo "   ✅ Backup complete."
+
+          # ── Install boot artifacts ───────────────────────────────────
+          echo "📥 Installing kernel image to \${BOOT_DIR} ..."
+          install -m 644 "\${SCRIPT_DIR}/boot/vmlinuz-\${KR}"       "\${BOOT_DIR}/"
+          install -m 644 "\${SCRIPT_DIR}/boot/vmlinux-\${KR}"       "\${BOOT_DIR}/"
+          install -m 644 "\${SCRIPT_DIR}/boot/System.map-\${KR}"    "\${BOOT_DIR}/"
+          install -m 644 "\${SCRIPT_DIR}/boot/config-\${KR}"        "\${BOOT_DIR}/"
+          install -m 644 "\${SCRIPT_DIR}/boot/initramfs-\${KR}.img" "\${BOOT_DIR}/"
+          echo "   ✅ Boot artifacts installed."
+
+          # ── Install modules ──────────────────────────────────────────
+          echo "🔧 Installing kernel modules to \${MOD_DIR}/\${KR} ..."
+          if [[ -d "\${MOD_DIR}/\${KR}" ]]; then
+            echo "   ⚠️  Existing module directory found; removing it..."
+            rm -rf "\${MOD_DIR}/\${KR}"
+          fi
+          cp -r "\${SCRIPT_DIR}/lib/modules/\${KR}" "\${MOD_DIR}/"
+          echo "   ✅ Modules installed."
+
+          # ── depmod: rebuild the module dependency map ─────────────────
+          echo "🔄 Running depmod -a \${KR} ..."
+          depmod -a "\${KR}"
+          echo "   ✅ depmod complete."
+
+          # ── Update bootloader ────────────────────────────────────────
+          echo "🔄 Detecting and updating bootloader ..."
+
+          ROOT_UUID=\$(findmnt -n -o UUID / 2>/dev/null || blkid -s UUID -o value \$(df / --output=source | tail -1))
+
+          if [[ -d /boot/loader/entries ]] || [[ -d /boot/efi/EFI/systemd ]]; then
+            # ── systemd-boot ──────────────────────────────────────────
+            echo "   → Detected: systemd-boot"
+            ENTRY_DIR="/boot/loader/entries"
+            mkdir -p "\${ENTRY_DIR}"
+
+            ENTRY_FILE="\${ENTRY_DIR}/orata-\${KR}.conf"
+            cat > "\${ENTRY_FILE}" << EOF
+          title   OrataKernel \${KR}
+          linux   /vmlinuz-\${KR}
+          initrd  /initramfs-\${KR}.img
+          options root=UUID=\${ROOT_UUID} rw quiet loglevel=3
+          EOF
+            echo "   ✅ systemd-boot entry: \${ENTRY_FILE}"
+
+          elif command -v grub-mkconfig &>/dev/null || command -v grub2-mkconfig &>/dev/null; then
+            # ── GRUB ─────────────────────────────────────────────────
+            echo "   → Detected: GRUB"
+            GRUB_CFG=""
+            for path in \
+              /boot/grub/grub.cfg \
+              /boot/grub2/grub.cfg \
+              /boot/efi/EFI/fedora/grub.cfg \
+              /boot/efi/EFI/ubuntu/grub.cfg; do
+              [[ -f "\$path" ]] && GRUB_CFG="\$path" && break
+            done
+
+            if [[ -n "\${GRUB_CFG}" ]]; then
+              GRUB_CMD=\$(command -v grub2-mkconfig || command -v grub-mkconfig)
+              "\${GRUB_CMD}" -o "\${GRUB_CFG}"
+              echo "   ✅ GRUB config updated: \${GRUB_CFG}"
+            else
+              echo "   ⚠️  GRUB config not found. Manual update required."
+            fi
+          else
+            echo "   ⚠️  Bootloader not detected automatically."
+            echo "      Add a boot entry manually:"
+            echo "      kernel:    \${BOOT_DIR}/vmlinuz-\${KR}"
+            echo "      initramfs: \${BOOT_DIR}/initramfs-\${KR}.img"
+            echo "      root UUID: \${ROOT_UUID}"
+          fi
+
+          echo ""
+          echo "╔══════════════════════════════════════════════════════╗"
+          echo "║  ✅ OrataKernel \${KR} installed successfully!      ║"
+          echo "║                                                      ║"
+          echo "║  Next step:                                          ║"
+          echo "║    sudo reboot                                        ║"
+          echo "║                                                      ║"
+          echo "║  Rollback if issues occur:                           ║"
+          echo "║    Select the old kernel from the bootloader menu    ║"
+          echo "║    Backup: \${BACKUP_DIR}   ║"
+          echo "╚══════════════════════════════════════════════════════╝"
+          echo ""
+          INSTALL_EOF
+
+          chmod +x "${STAGING}/install.sh"
+          echo "✅ install.sh generated."
+
+      # ─── Generate README ────────────────────────────────────────────
+      - name: Generate README.md inside package
+        run: |
+          KR="${KERNEL_RELEASE_ACTUAL}"
+          TAG="${{ steps.version.outputs.tag }}"
+          STAGING="$(pwd)/staging"
+
+          cat > "${STAGING}/README.md" << README_EOF
+          # OrataKernel — ${TAG}
+
+          **Kernel Release:** \`${KR}\`
+          **Target Device:** Lenovo ThinkPad L13
+
+          ## Package Contents
+
+          \`\`\`
+          staging/
+          ├── boot/
+          │   ├── vmlinuz-${KR}        ← Kernel image (bzImage, loaded by the bootloader)
+          │   ├── vmlinux-${KR}         ← Uncompressed kernel image (for debugging)
+          │   ├── initramfs-${KR}.img   ← Initial RAM filesystem
+          │   ├── System.map-${KR}      ← Kernel symbol map
+          │   └── config-${KR}          ← Kconfig used at build time
+          ├── lib/
+          │   └── modules/${KR}/        ← Kernel modules (debug symbols stripped)
+          ├── install.sh                ← Installer script
+          └── README.md
+          \`\`\`
+
+          ## Installation
+
+          \`\`\`bash
+          # 1. Download and extract the zip archive
+          unzip ${TAG}.zip
+
+          # 2. Run the installer as root (mirrors sudo make install)
+          sudo bash install.sh
+
+          # 3. Reboot
+          sudo reboot
+          \`\`\`
+
+          ## Rollback
+
+          If issues occur after rebooting, select the previous kernel from the bootloader menu.
+          An automatic backup is stored at \`/boot/orata-backup-{timestamp}/\`.
+          README_EOF
+
+          echo "✅ README.md generated."
+
+      # ─── Package ───────────────────────────────────────────────────
+      # The zip is named after the kernel release to stay consistent with
+      # file names in /boot.
+      #
+      # NOTE: modules_install creates two symlinks inside lib/modules/{KR}/:
+      #   - build  → points to the kernel source tree (pwd)
+      #   - source → points to the kernel source tree (pwd)
+      # If zip -r follows these symlinks it descends into the source tree,
+      # which itself contains staging/ → infinite loop → absurd paths.
+      # Fix: remove both symlinks before zipping. They are not needed in a release.
+      - name: Package release artifacts
+        id: package
+        run: |
+          KR="${KERNEL_RELEASE_ACTUAL}"
+          TAG="${{ steps.version.outputs.tag }}"
+          ZIPNAME="${TAG}.zip"
+          ZIPPATH="$(pwd)/${ZIPNAME}"
+          STAGING="$(pwd)/staging"
+
+          # ── Remove symlinks that would cause an infinite loop ─────────
+          # `build` and `source` are symlinks to the kernel source tree;
+          # they are not needed in a release package (only for out-of-tree module development).
+          MOD_DIR="${STAGING}/lib/modules/${KR}"
+          for symlink in build source; do
+            TARGET="${MOD_DIR}/${symlink}"
+            if [[ -L "${TARGET}" ]]; then
+              rm -f "${TARGET}"
+              echo "🔗 Removed symlink: lib/modules/${KR}/${symlink}"
+            fi
+          done
+
+          # ── Verify no remaining symlinks point outside staging ────────
+          DANGLING=$(find "${STAGING}" -type l | while read -r link; do
+            dest=$(readlink -f "${link}" 2>/dev/null || true)
+            if [[ -n "${dest}" ]] && [[ "${dest}" != "${STAGING}"* ]]; then
+              echo "  ⚠️  ${link} → ${dest}"
+            fi
+          done)
+          if [[ -n "${DANGLING}" ]]; then
+            echo "⚠️  Symlinks pointing outside staging detected (will be skipped by zip):"
+            echo "${DANGLING}"
+          fi
+
+          # ── Zip with -y: store symlinks as symlinks, do not follow them ──
+          # Double safety: the -y flag makes zip store symlinks as symlinks
+          # instead of following them, so even if stray symlinks slip through
+          # the check above, zip will not enter an infinite loop.
+          cd "${STAGING}"
+          zip -r -y "${ZIPPATH}" . --exclude "*.DS_Store"
+          cd ..
+
+          echo "zip_name=${ZIPNAME}" >> "$GITHUB_OUTPUT"
+          echo "zip_path=${ZIPPATH}" >> "$GITHUB_OUTPUT"
+
+          echo "✅ Package: ${ZIPNAME} ($(du -sh "${ZIPPATH}" | cut -f1))"
+          echo "📋 Zip contents:"
+          zipinfo -1 "${ZIPPATH}" | sort | head -50
+
+      # ─── Dry run exit ───────────────────────────────────────────────
+      - name: "[Dry Run] Skip release & PR"
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        run: |
+          echo "🔵 Dry run mode — build complete, skipping tag/release/PR."
+          echo "   Zip artifact: ${{ steps.package.outputs.zip_name }}"
+
+      # ─── Bump Makefile & create PR branch ──────────────────────────
+      # The tag and release are created AFTER the PR branch is ready, but
+      # the tag is pushed to master HEAD — not to the automate branch.
+      # This prevents a race condition between tagging and the PR merge.
+      - name: Configure git identity
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+      - name: Bump EXTRAVERSION in Makefile and create PR branch
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        id: pr_branch
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          EXTRAVERSION="${{ steps.version.outputs.extraversion }}"
+          BRANCH="automate/bump-extraversion-${TAG}"
+
+          git checkout -b "${BRANCH}"
+
+          # ── Patch Makefile ─────────────────────────────────────────
+          if grep -qE '^EXTRAVERSION\s*=' Makefile; then
+            sed -i "s/^EXTRAVERSION\s*=.*/EXTRAVERSION = ${EXTRAVERSION}/" Makefile
+            echo "✅ Makefile EXTRAVERSION → ${EXTRAVERSION}"
+          else
+            echo "❌ EXTRAVERSION not found in Makefile"
+            exit 1
+          fi
+
+          # ── Patch config (only if the pattern is present; no silent failure) ──
+          CONFIG_FILE="lenovo-thinkpad-l13-config"
+          CONFIG_PATTERN="Linux/x86 .* Kernel Configuration"
+          CONFIG_REPLACE="Linux/x86 ${{ steps.makefile_ver.outputs.base_ver }}${EXTRAVERSION} Kernel Configuration"
+
+          if grep -qP "${CONFIG_PATTERN}" "${CONFIG_FILE}"; then
+            sed -i "s|${CONFIG_PATTERN}|${CONFIG_REPLACE}|" "${CONFIG_FILE}"
+            echo "✅ ${CONFIG_FILE} config string updated."
+          else
+            echo "⚠️  Pattern '${CONFIG_PATTERN}' not found in ${CONFIG_FILE}."
+            echo "   Skipping config string update — this will not cause the build to fail."
+          fi
+
+          git add Makefile "${CONFIG_FILE}"
+          git commit -m "chore: bump EXTRAVERSION to ${EXTRAVERSION} [skip ci]"
+          git push origin "${BRANCH}"
+
+          echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+          echo "✅ PR branch pushed: ${BRANCH}"
+
+      # ─── Create tag on master HEAD ─────────────────────────────────
+      # The tag is created from master HEAD (before the PR is merged) so that
+      # it always points to a clean commit on master rather than a temporary branch.
+      # Release assets still reflect the build from this exact commit.
+      - name: Create and push tag on master HEAD
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+
+          # Ensure we are on master HEAD, not on the automate branch
+          git checkout master
+
+          git tag -a "${TAG}" -m "OrataKernel ${TAG}" HEAD
+          git push origin "${TAG}"
+
+          echo "✅ Tag pushed: ${TAG} → $(git rev-parse HEAD)"
+
+      # ─── Create GitHub Release ─────────────────────────────────────
+      - name: Create GitHub Release and attach zip
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs   = require('fs');
+            const path = require('path');
+
+            const tag        = '${{ steps.version.outputs.tag }}';
+            const kr         = process.env.KERNEL_RELEASE_ACTUAL;
+            const zipName    = '${{ steps.package.outputs.zip_name }}';
+            const zipPath    = '${{ steps.package.outputs.zip_path }}';  // absolute path
+
+            if (!fs.existsSync(zipPath)) {
+              core.setFailed(`Zip archive not found: ${zipPath}`);
+              return;
+            }
+
+            // ── Create release ───────────────────────────────────────
+            const { data: release } = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              tag_name:   tag,
+              name:       `OrataKernel ${tag}`,
+              prerelease: true,
+              draft:      false,
+              body: [
+                '## OrataKernel Build',
+                '',
+                `**Version:** \`${tag}\``,
+                `**Kernel Release:** \`${kr}\``,
+                `**Target Device:** Lenovo ThinkPad L13`,
+                '',
+                '## 📦 Package Contents',
+                '',
+                '| File | Description |',
+                '|------|-------------|',
+                `| \`boot/vmlinuz-${kr}\` | Kernel image (bzImage, bootable) |`,
+                `| \`boot/vmlinux-${kr}\` | Uncompressed kernel image (for debugging) |`,
+                `| \`boot/initramfs-${kr}.img\` | Initial RAM filesystem |`,
+                `| \`boot/System.map-${kr}\` | Kernel symbol map |`,
+                `| \`boot/config-${kr}\` | Kconfig used at build time |`,
+                `| \`lib/modules/${kr}/\` | Kernel modules (debug symbols stripped) |`,
+                `| \`install.sh\` | Installer script |`,
+                '',
+                '## 🚀 Installation',
+                '',
+                '```bash',
+                `# 1. Download and extract the archive`,
+                `unzip ${zipName}`,
+                '',
+                `# 2. Install as root (mirrors sudo make install)`,
+                `sudo bash install.sh`,
+                '',
+                `# 3. Reboot`,
+                `sudo reboot`,
+                '```',
+                '',
+                '## 🔄 Rollback',
+                'If issues occur after rebooting, select the previous kernel from the bootloader menu.',
+                'An automatic backup is stored at `/boot/orata-backup-{timestamp}/`.',
+              ].join('\n'),
+            });
+
+            core.info(`✅ Release created: ${release.html_url}`);
+
+            // ── Upload zip ───────────────────────────────────────────
+            const zipData = fs.readFileSync(zipPath);
+            await github.rest.repos.uploadReleaseAsset({
+              owner:      context.repo.owner,
+              repo:       context.repo.repo,
+              release_id: release.id,
+              name:       zipName,
+              data:       zipData,
+            });
+
+            core.info(`✅ Asset uploaded: ${zipName}`);
+
+      # ─── Create Pull Request ───────────────────────────────────────
+      - name: Create Pull Request for Makefile bump
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const tag    = '${{ steps.version.outputs.tag }}';
+            const branch = '${{ steps.pr_branch.outputs.branch }}';
+            const kr     = process.env.KERNEL_RELEASE_ACTUAL;
+            const ev     = '${{ steps.version.outputs.extraversion }}';
+
+            // Guard: do not create a duplicate PR
+            const { data: existing } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              head:  `${context.repo.owner}:${branch}`,
+              base:  'master',
+              state: 'open',
+            });
+            if (existing.length > 0) {
+              core.info(`PR already exists: ${existing[0].html_url}`);
+              return;
+            }
+
+            const { data: pr } = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              title: `chore: bump EXTRAVERSION to ${ev}`,
+              head:  branch,
+              base:  'master',
+              body: [
+                '## Makefile EXTRAVERSION Bump',
+                '',
+                'Auto-generated by the **Build Kernel** workflow.',
+                '',
+                '| Field | Value |',
+                '|-------|-------|',
+                `| Tag | \`${tag}\` |`,
+                `| Kernel Release | \`${kr}\` |`,
+                `| EXTRAVERSION | \`${ev}\` |`,
+                `| Branch | \`${branch}\` |`,
+                `| Date | ${new Date().toUTCString()} |`,
+                '',
+                '### Checklist',
+                '- [ ] Verify build log has no critical errors or warnings',
+                '- [ ] Test installation on the target device',
+                '- [ ] Approve & merge',
+              ].join('\n'),
+            });
+
+            core.info(`✅ PR created: ${pr.html_url}`);
