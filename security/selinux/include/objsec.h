@@ -32,7 +32,9 @@
 
 struct avdc_entry {
 	u32 isid; /* inode SID */
-	struct av_decision avd; /* av decision */
+	u32 allowed; /* allowed permission bitmask */
+	u32 audited; /* audited permission bitmask */
+	bool permissive; /* AVC permissive flag */
 };
 
 struct cred_security_struct {

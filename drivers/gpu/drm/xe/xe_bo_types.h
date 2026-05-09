@@ -18,7 +18,6 @@
 #include "xe_ggtt_types.h"
 
 struct xe_device;
-struct xe_mem_pool_node;
 struct xe_vm;
 
 #define XE_BO_MAX_PLACEMENTS	3
@@ -89,7 +88,7 @@ struct xe_bo {
 	bool ccs_cleared;
 
 	/** @bb_ccs: BB instructions of CCS read/write. Valid only for VF */
-	struct xe_mem_pool_node *bb_ccs[XE_SRIOV_VF_CCS_CTX_COUNT];
+	struct xe_bb *bb_ccs[XE_SRIOV_VF_CCS_CTX_COUNT];
 
 	/**
 	 * @cpu_caching: CPU caching mode. Currently only used for userspace
