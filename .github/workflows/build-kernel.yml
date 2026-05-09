@@ -53,22 +53,39 @@ jobs:
             exit 1
           fi
 
+          EV=$(grep -E '^EXTRAVERSION\s*=' Makefile | head -1 | sed 's/^EXTRAVERSION[[:space:]]*=[[:space:]]*//')
+
           echo "version=${VER}"   >> "$GITHUB_OUTPUT"
           echo "patchlevel=${PATCH}" >> "$GITHUB_OUTPUT"
           echo "sublevel=${SUB}"  >> "$GITHUB_OUTPUT"
           echo "base_ver=${VER}.${PATCH}.${SUB}" >> "$GITHUB_OUTPUT"
+          echo "extraversion=${EV}" >> "$GITHUB_OUTPUT"
 
           echo "✅ Makefile version: ${VER}.${PATCH}.${SUB}"
+          echo "✅ Makefile EXTRAVERSION: ${EV}"
 
       # ─── Auto-increment versioning ─────────────────────────────────
-      # Format: {VERSION}.{PATCHLEVEL}.{SUBLEVEL}-rc1-OrataKernel-1.0.{N}-zen
-      # Increment N is derived from the highest existing tag in the repo.
+      # Format is read from EXTRAVERSION in the Makefile; only the 1.0.{N}
+      # increment number is replaced. The prefix and suffix are preserved as-is.
       - name: Determine next increment
         id: version
         run: |
           BASE="${{ steps.makefile_ver.outputs.base_ver }}"
-          PREFIX="${BASE}-rc1-OrataKernel-1.0."
-          SUFFIX="-zen"
+          CURRENT_EV="${{ steps.makefile_ver.outputs.extraversion }}"
+
+          # Parse the current EXTRAVERSION to extract the prefix and suffix
+          # that surround the 1.0.{N} increment number.
+          # Example: -rc1-OrataKernel-1.0.4-zen → EV_PREFIX=-rc1-OrataKernel-1.0.  EV_SUFFIX=-zen
+          if [[ "${CURRENT_EV}" =~ ^(.*1\.0\.)([0-9]+)(.*)$ ]]; then
+            EV_PREFIX="${BASH_REMATCH[1]}"
+            EV_SUFFIX="${BASH_REMATCH[3]}"
+          else
+            echo "❌ Cannot parse 1.0.{N} pattern from EXTRAVERSION: '${CURRENT_EV}'"
+            exit 1
+          fi
+
+          PREFIX="${BASE}${EV_PREFIX}"
+          SUFFIX="${EV_SUFFIX}"
 
           git fetch --tags
 
@@ -84,7 +101,7 @@ jobs:
 
           # Version components
           TAG="${PREFIX}${N}${SUFFIX}"
-          EXTRAVERSION="-rc1-OrataKernel-1.0.${N}-zen"
+          EXTRAVERSION="${EV_PREFIX}${N}${EV_SUFFIX}"
 
           # KERNEL_RELEASE = the version string reported by `uname -r`.
           # Linux appends "+" when there are uncommitted changes at build time,
