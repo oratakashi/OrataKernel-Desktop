@@ -568,9 +568,7 @@ static bool construct_phy(struct dc_link *link,
 		goto ddc_create_fail;
 	}
 
-	/* Embedded display connectors such as LVDS may not have DDC. */
-	if (!link->ddc->ddc_pin &&
-	    !dc_is_embedded_signal(link->connector_signal)) {
+	if (!link->ddc->ddc_pin) {
 		DC_ERROR("Failed to get I2C info for connector!\n");
 		goto ddc_create_fail;
 	}

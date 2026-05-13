@@ -501,6 +501,8 @@ void tcp_ca_openreq_child(struct sock *sk, const struct dst_entry *dst)
 	u32 ca_key = dst_metric(dst, RTAX_CC_ALGO);
 	bool ca_got_dst = false;
 
+	tcp_set_ecn_low_from_dst(sk, dst);
+
 	if (ca_key != TCP_CA_UNSPEC) {
 		const struct tcp_congestion_ops *ca;
 
@@ -1012,6 +1014,6 @@ enum skb_drop_reason tcp_child_process(struct sock *parent, struct sock *child,
 	}
 
 	bh_unlock_sock(child);
-	sock_put(child);
+
 	return reason;
 }

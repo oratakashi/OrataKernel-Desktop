@@ -29,7 +29,6 @@
 #include "xe_hw_engine.h"
 #include "xe_lrc.h"
 #include "xe_map.h"
-#include "xe_mem_pool.h"
 #include "xe_mocs.h"
 #include "xe_printk.h"
 #include "xe_pt.h"
@@ -1167,12 +1166,11 @@ int xe_migrate_ccs_rw_copy(struct xe_tile *tile, struct xe_exec_queue *q,
 	u32 batch_size, batch_size_allocated;
 	struct xe_device *xe = gt_to_xe(gt);
 	struct xe_res_cursor src_it, ccs_it;
-	struct xe_mem_pool *bb_pool;
 	struct xe_sriov_vf_ccs_ctx *ctx;
+	struct xe_sa_manager *bb_pool;
 	u64 size = xe_bo_size(src_bo);
-	struct xe_mem_pool_node *bb;
+	struct xe_bb *bb = NULL;
 	u64 src_L0, src_L0_ofs;
-	struct xe_bb xe_bb_tmp;
 	u32 src_L0_pt;
 	int err;
 
@@ -1210,18 +1208,18 @@ int xe_migrate_ccs_rw_copy(struct xe_tile *tile, struct xe_exec_queue *q,
 		size -= src_L0;
 	}
 
-	bb = xe_mem_pool_alloc_node();
+	bb = xe_bb_alloc(gt);
 	if (IS_ERR(bb))
 		return PTR_ERR(bb);
 
 	bb_pool = ctx->mem.ccs_bb_pool;
-	scoped_guard(mutex, xe_mem_pool_bo_swap_guard(bb_pool)) {
-		xe_mem_pool_swap_shadow_locked(bb_pool);
+	scoped_guard(mutex, xe_sa_bo_swap_guard(bb_pool)) {
+		xe_sa_bo_swap_shadow(bb_pool);
 
-		err = xe_mem_pool_insert_node(bb_pool, bb, batch_size * sizeof(u32));
+		err = xe_bb_init(bb, bb_pool, batch_size);
 		if (err) {
 			xe_gt_err(gt, "BB allocation failed.\n");
-			kfree(bb);
+			xe_bb_free(bb, NULL);
 			return err;
 		}
 
@@ -1229,7 +1227,6 @@ int xe_migrate_ccs_rw_copy(struct xe_tile *tile, struct xe_exec_queue *q,
 		size = xe_bo_size(src_bo);
 		batch_size = 0;
 
-		xe_bb_tmp = (struct xe_bb){ .cs = xe_mem_pool_node_cpu_addr(bb), .len = 0 };
 		/*
 		 * Emit PTE and copy commands here.
 		 * The CCS copy command can only support limited size. If the size to be
@@ -1258,27 +1255,24 @@ int xe_migrate_ccs_rw_copy(struct xe_tile *tile, struct xe_exec_queue *q,
 			xe_assert(xe, IS_ALIGNED(ccs_it.start, PAGE_SIZE));
 			batch_size += EMIT_COPY_CCS_DW;
 
-			emit_pte(m, &xe_bb_tmp, src_L0_pt, false, true, &src_it, src_L0, src);
+			emit_pte(m, bb, src_L0_pt, false, true, &src_it, src_L0, src);
 
-			emit_pte(m, &xe_bb_tmp, ccs_pt, false, false, &ccs_it, ccs_size, src);
+			emit_pte(m, bb, ccs_pt, false, false, &ccs_it, ccs_size, src);
 
-			xe_bb_tmp.len = emit_flush_invalidate(xe_bb_tmp.cs, xe_bb_tmp.len,
-							      flush_flags);
-			flush_flags = xe_migrate_ccs_copy(m, &xe_bb_tmp, src_L0_ofs, src_is_pltt,
+			bb->len = emit_flush_invalidate(bb->cs, bb->len, flush_flags);
+			flush_flags = xe_migrate_ccs_copy(m, bb, src_L0_ofs, src_is_pltt,
 							  src_L0_ofs, dst_is_pltt,
 							  src_L0, ccs_ofs, true);
-			xe_bb_tmp.len = emit_flush_invalidate(xe_bb_tmp.cs, xe_bb_tmp.len,
-							      flush_flags);
+			bb->len = emit_flush_invalidate(bb->cs, bb->len, flush_flags);
 
 			size -= src_L0;
 		}
 
-		xe_assert(xe, (batch_size_allocated == xe_bb_tmp.len));
-		xe_assert(xe, bb->sa_node.size == xe_bb_tmp.len * sizeof(u32));
+		xe_assert(xe, (batch_size_allocated == bb->len));
 		src_bo->bb_ccs[read_write] = bb;
 
 		xe_sriov_vf_ccs_rw_update_bb_addr(ctx);
-		xe_mem_pool_sync_shadow_locked(bb);
+		xe_sa_bo_sync_shadow(bb->bo);
 	}
 
 	return 0;
@@ -1303,10 +1297,10 @@ int xe_migrate_ccs_rw_copy(struct xe_tile *tile, struct xe_exec_queue *q,
 void xe_migrate_ccs_rw_copy_clear(struct xe_bo *src_bo,
 				  enum xe_sriov_vf_ccs_rw_ctxs read_write)
 {
-	struct xe_mem_pool_node *bb = src_bo->bb_ccs[read_write];
+	struct xe_bb *bb = src_bo->bb_ccs[read_write];
 	struct xe_device *xe = xe_bo_device(src_bo);
-	struct xe_mem_pool *bb_pool;
 	struct xe_sriov_vf_ccs_ctx *ctx;
+	struct xe_sa_manager *bb_pool;
 	u32 *cs;
 
 	xe_assert(xe, IS_SRIOV_VF(xe));
@@ -1314,17 +1308,17 @@ void xe_migrate_ccs_rw_copy_clear(struct xe_bo *src_bo,
 	ctx = &xe->sriov.vf.ccs.contexts[read_write];
 	bb_pool = ctx->mem.ccs_bb_pool;
 
-	scoped_guard(mutex, xe_mem_pool_bo_swap_guard(bb_pool)) {
-		xe_mem_pool_swap_shadow_locked(bb_pool);
+	guard(mutex) (xe_sa_bo_swap_guard(bb_pool));
+	xe_sa_bo_swap_shadow(bb_pool);
 
-		cs = xe_mem_pool_node_cpu_addr(bb);
-		memset(cs, MI_NOOP, bb->sa_node.size);
-		xe_sriov_vf_ccs_rw_update_bb_addr(ctx);
+	cs = xe_sa_bo_cpu_addr(bb->bo);
+	memset(cs, MI_NOOP, bb->len * sizeof(u32));
+	xe_sriov_vf_ccs_rw_update_bb_addr(ctx);
 
-		xe_mem_pool_sync_shadow_locked(bb);
-		xe_mem_pool_free_node(bb);
-		src_bo->bb_ccs[read_write] = NULL;
-	}
+	xe_sa_bo_sync_shadow(bb->bo);
+
+	xe_bb_free(bb, NULL);
+	src_bo->bb_ccs[read_write] = NULL;
 }
 
 /**

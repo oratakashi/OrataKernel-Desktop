@@ -53,6 +53,7 @@ struct kernel_clone_args;
 enum css_task_iter_flags {
 	CSS_TASK_ITER_PROCS    = (1U << 0),  /* walk only threadgroup leaders */
 	CSS_TASK_ITER_THREADED = (1U << 1),  /* walk all threaded css_sets in the domain */
+	CSS_TASK_ITER_WITH_DEAD = (1U << 2),  /* include exiting tasks */
 	CSS_TASK_ITER_SKIPPED  = (1U << 16), /* internal flags */
 };
 
@@ -620,6 +621,27 @@ static inline struct cgroup *cgroup_ancestor(struct cgroup *cgrp,
 	if (ancestor_level < 0 || ancestor_level > cgrp->level)
 		return NULL;
 	return cgrp->ancestors[ancestor_level];
+}
+
+/**
+ * cgroup_common_ancestor - find common ancestor of two cgroups
+ * @a: first cgroup to find common ancestor of
+ * @b: second cgroup to find common ancestor of
+ *
+ * Find the first cgroup that is an ancestor of both @a and @b, if it exists
+ * and return a pointer to it. If such a cgroup doesn't exist, return NULL.
+ *
+ * This function is safe to call as long as both @a and @b are accessible.
+ */
+static inline struct cgroup *cgroup_common_ancestor(struct cgroup *a,
+						    struct cgroup *b)
+{
+	int level;
+
+	for (level = min(a->level, b->level); level >= 0; level--)
+		if (a->ancestors[level] == b->ancestors[level])
+			return a->ancestors[level];
+	return NULL;
 }
 
 /**

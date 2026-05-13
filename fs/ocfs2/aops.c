@@ -2296,6 +2296,18 @@ static int ocfs2_dio_end_io_write(struct inode *inode,
 		goto out;
 	}
 
+	/* Delete orphan before acquire i_rwsem. */
+	if (dwc->dw_orphaned) {
+		BUG_ON(dwc->dw_writer_pid != task_pid_nr(current));
+
+		end = end > i_size_read(inode) ? end : 0;
+
+		ret = ocfs2_del_inode_from_orphan(osb, inode, di_bh,
+				!!end, end);
+		if (ret < 0)
+			mlog_errno(ret);
+	}
+
 	down_write(&oi->ip_alloc_sem);
 	di = (struct ocfs2_dinode *)di_bh->b_data;
 

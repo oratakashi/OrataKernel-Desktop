@@ -1281,6 +1281,7 @@ static bool kick_pool(struct worker_pool *pool)
 
 	p = worker->task;
 
+#ifndef CONFIG_SCHED_ALT
 #ifdef CONFIG_SMP
 	/*
 	 * Idle @worker is about to execute @work and waking up provides an
@@ -1310,6 +1311,8 @@ static bool kick_pool(struct worker_pool *pool)
 		}
 	}
 #endif
+#endif /* !CONFIG_SCHED_ALT */
+
 	wake_up_process(p);
 	return true;
 }
@@ -1438,7 +1441,11 @@ void wq_worker_running(struct task_struct *task)
 	 * CPU intensive auto-detection cares about how long a work item hogged
 	 * CPU without sleeping. Reset the starting timestamp on wakeup.
 	 */
+#ifdef CONFIG_SCHED_ALT
+	worker->current_at = worker->task->sched_time;
+#else
 	worker->current_at = worker->task->se.sum_exec_runtime;
+#endif
 
 	WRITE_ONCE(worker->sleeping, 0);
 }
@@ -1523,7 +1530,11 @@ void wq_worker_tick(struct task_struct *task)
 	 * We probably want to make this prettier in the future.
 	 */
 	if ((worker->flags & WORKER_NOT_RUNNING) || READ_ONCE(worker->sleeping) ||
+#ifdef CONFIG_SCHED_ALT
+	    worker->task->sched_time - worker->current_at <
+#else
 	    worker->task->se.sum_exec_runtime - worker->current_at <
+#endif
 	    wq_cpu_intensive_thresh_us * NSEC_PER_USEC)
 		return;
 
@@ -3229,7 +3240,11 @@ __acquires(&pool->lock)
 	worker->current_func = work->func;
 	worker->current_pwq = pwq;
 	if (worker->task)
+#ifdef CONFIG_SCHED_ALT
+		worker->current_at = worker->task->sched_time;
+#else
 		worker->current_at = worker->task->se.sum_exec_runtime;
+#endif
 	worker->current_start = jiffies;
 	work_data = *work_data_bits(work);
 	worker->current_color = get_work_color(work_data);
@@ -5906,6 +5921,21 @@ err_destroy:
 	return NULL;
 }
 
+__printf(1, 0)
+static struct workqueue_struct *alloc_workqueue_va(const char *fmt,
+						   unsigned int flags,
+						   int max_active,
+						   va_list args)
+{
+	struct workqueue_struct *wq;
+
+	wq = __alloc_workqueue(fmt, flags, max_active, args);
+	if (wq)
+		wq_init_lockdep(wq);
+
+	return wq;
+}
+
 __printf(1, 4)
 struct workqueue_struct *alloc_workqueue_noprof(const char *fmt,
 						unsigned int flags,
@@ -5915,12 +5945,8 @@ struct workqueue_struct *alloc_workqueue_noprof(const char *fmt,
 	va_list args;
 
 	va_start(args, max_active);
-	wq = __alloc_workqueue(fmt, flags, max_active, args);
+	wq = alloc_workqueue_va(fmt, flags, max_active, args);
 	va_end(args);
-	if (!wq)
-		return NULL;
-
-	wq_init_lockdep(wq);
 
 	return wq;
 }
@@ -5932,15 +5958,15 @@ static void devm_workqueue_release(void *res)
 }
 
 __printf(2, 5) struct workqueue_struct *
-devm_alloc_workqueue(struct device *dev, const char *fmt, unsigned int flags,
-		     int max_active, ...)
+devm_alloc_workqueue_noprof(struct device *dev, const char *fmt,
+			    unsigned int flags, int max_active, ...)
 {
 	struct workqueue_struct *wq;
 	va_list args;
 	int ret;
 
 	va_start(args, max_active);
-	wq = alloc_workqueue(fmt, flags, max_active, args);
+	wq = alloc_workqueue_va(fmt, flags, max_active, args);
 	va_end(args);
 	if (!wq)
 		return NULL;
@@ -5951,7 +5977,7 @@ devm_alloc_workqueue(struct device *dev, const char *fmt, unsigned int flags,
 
 	return wq;
 }
-EXPORT_SYMBOL_GPL(devm_alloc_workqueue);
+EXPORT_SYMBOL_GPL(devm_alloc_workqueue_noprof);
 
 #ifdef CONFIG_LOCKDEP
 __printf(1, 5)
