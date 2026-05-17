@@ -68,6 +68,12 @@ Maintainers List
           first. When adding to this list, please keep the entries in
           alphabetical order.
 
+3C509 NETWORK DRIVER
+M:	"Maciej W. Rozycki" <macro@orcam.me.uk>
+L:	netdev@vger.kernel.org
+S:	Maintained
+F:	drivers/net/ethernet/3com/3c509.c
+
 3C59X NETWORK DRIVER
 M:	Steffen Klassert <klassert@kernel.org>
 L:	netdev@vger.kernel.org
@@ -2040,7 +2046,7 @@ F:	Documentation/hwmon/aquacomputer_d5next.rst
 F:	drivers/hwmon/aquacomputer_d5next.c
 
 AQUANTIA ETHERNET DRIVER (atlantic)
-M:	Igor Russkikh <irusskikh@marvell.com>
+M:	Sukhdeep Singh <sukhdeeps@marvell.com>
 L:	netdev@vger.kernel.org
 S:	Maintained
 W:	https://www.marvell.com/
@@ -2049,7 +2055,7 @@ F:	Documentation/networking/device_drivers/ethernet/aquantia/atlantic.rst
 F:	drivers/net/ethernet/aquantia/atlantic/
 
 AQUANTIA ETHERNET DRIVER PTP SUBSYSTEM
-M:	Egor Pomozov <epomozov@marvell.com>
+M:	Sukhdeep Singh <sukhdeeps@marvell.com>
 L:	netdev@vger.kernel.org
 S:	Maintained
 W:	http://www.aquantia.com
@@ -4206,8 +4212,8 @@ F:	include/uapi/linux/sonet.h
 F:	net/atm/
 
 ATMEL MACB ETHERNET DRIVER
-M:	Nicolas Ferre <nicolas.ferre@microchip.com>
-M:	Claudiu Beznea <claudiu.beznea@tuxon.dev>
+M:	Théo Lebrun <theo.lebrun@bootlin.com>
+R:	Conor Dooley <conor.dooley@microchip.com>
 S:	Maintained
 F:	drivers/net/ethernet/cadence/
 
@@ -4324,18 +4330,16 @@ F:	Documentation/devicetree/bindings/leds/backlight/awinic,aw99706.yaml
 F:	drivers/video/backlight/aw99706.c
 
 AXENTIA ARM DEVICES
-M:	Peter Rosin <peda@axentia.se>
 L:	linux-arm-kernel@lists.infradead.org (moderated for non-subscribers)
-S:	Maintained
+S:	Orphan
 F:	arch/arm/boot/dts/microchip/at91-linea.dtsi
 F:	arch/arm/boot/dts/microchip/at91-natte.dtsi
 F:	arch/arm/boot/dts/microchip/at91-nattis-2-natte-2.dts
 F:	arch/arm/boot/dts/microchip/at91-tse850-3.dts
 
 AXENTIA ASOC DRIVERS
-M:	Peter Rosin <peda@axentia.se>
 L:	linux-sound@vger.kernel.org
-S:	Maintained
+S:	Orphan
 F:	Documentation/devicetree/bindings/sound/axentia,*
 F:	sound/soc/atmel/tse850-pcm5142.c
 
@@ -6383,6 +6387,7 @@ F:	include/uapi/linux/comedi.h
 COMMON CLK FRAMEWORK
 M:	Michael Turquette <mturquette@baylibre.com>
 M:	Stephen Boyd <sboyd@kernel.org>
+R:	Brian Masney <bmasney@redhat.com>
 L:	linux-clk@vger.kernel.org
 S:	Maintained
 Q:	http://patchwork.kernel.org/project/linux-clk/list/
@@ -7101,6 +7106,12 @@ P:	Documentation/process/maintainer-tip.rst
 T:	git git://git.kernel.org/pub/scm/linux/kernel/git/tip/tip.git core/debugobjects
 F:	include/linux/debugobjects.h
 F:	lib/debugobjects.c
+
+DEC LANCE NETWORK DRIVER
+M:	"Maciej W. Rozycki" <macro@orcam.me.uk>
+L:	netdev@vger.kernel.org
+S:	Maintained
+F:	drivers/net/ethernet/amd/declance.c
 
 DECSTATION PLATFORM SUPPORT
 M:	"Maciej W. Rozycki" <macro@orcam.me.uk>
@@ -8218,10 +8229,9 @@ F:	include/uapi/drm/nouveau_drm.h
 CORE DRIVER FOR NVIDIA GPUS [RUST]
 M:	Danilo Krummrich <dakr@kernel.org>
 M:	Alexandre Courbot <acourbot@nvidia.com>
-L:	nouveau@lists.freedesktop.org
+L:	nova-gpu@lists.linux.dev
 S:	Supported
 W:	https://rust-for-linux.com/nova-gpu-driver
-Q:	https://patchwork.freedesktop.org/project/nouveau/
 B:	https://gitlab.freedesktop.org/drm/nova/-/issues
 C:	irc://irc.oftc.net/nouveau
 T:	git https://gitlab.freedesktop.org/drm/rust/kernel.git drm-rust-next
@@ -8230,10 +8240,9 @@ F:	drivers/gpu/nova-core/
 
 DRM DRIVER FOR NVIDIA GPUS [RUST]
 M:	Danilo Krummrich <dakr@kernel.org>
-L:	nouveau@lists.freedesktop.org
+L:	nova-gpu@lists.linux.dev
 S:	Supported
 W:	https://rust-for-linux.com/nova-gpu-driver
-Q:	https://patchwork.freedesktop.org/project/nouveau/
 B:	https://gitlab.freedesktop.org/drm/nova/-/issues
 C:	irc://irc.oftc.net/nouveau
 T:	git https://gitlab.freedesktop.org/drm/rust/kernel.git drm-rust-next
@@ -12071,7 +12080,7 @@ F:	Documentation/i2c/busses/i2c-nvidia-gpu.rst
 F:	drivers/i2c/busses/i2c-nvidia-gpu.c
 
 I2C MUXES
-M:	Peter Rosin <peda@axentia.se>
+M:	Peter Rosin <peda@lysator.liu.se>
 L:	linux-i2c@vger.kernel.org
 S:	Maintained
 F:	Documentation/devicetree/bindings/i2c/i2c-arb*
@@ -12472,7 +12481,7 @@ F:	drivers/iio/industrialio-backend.c
 F:	include/linux/iio/backend.h
 
 IIO DIGITAL POTENTIOMETER DAC
-M:	Peter Rosin <peda@axentia.se>
+M:	Peter Rosin <peda@lysator.liu.se>
 L:	linux-iio@vger.kernel.org
 S:	Maintained
 F:	Documentation/ABI/testing/sysfs-bus-iio-dac-dpot-dac
@@ -12480,7 +12489,7 @@ F:	Documentation/devicetree/bindings/iio/dac/dpot-dac.yaml
 F:	drivers/iio/dac/dpot-dac.c
 
 IIO ENVELOPE DETECTOR
-M:	Peter Rosin <peda@axentia.se>
+M:	Peter Rosin <peda@lysator.liu.se>
 L:	linux-iio@vger.kernel.org
 S:	Maintained
 F:	Documentation/ABI/testing/sysfs-bus-iio-adc-envelope-detector
@@ -12496,7 +12505,7 @@ F:	include/linux/iio/iio-gts-helper.h
 F:	drivers/iio/test/iio-test-gts.c
 
 IIO MULTIPLEXER
-M:	Peter Rosin <peda@axentia.se>
+M:	Peter Rosin <peda@lysator.liu.se>
 L:	linux-iio@vger.kernel.org
 S:	Maintained
 F:	Documentation/devicetree/bindings/iio/multiplexer/io-channel-mux.yaml
@@ -12527,7 +12536,7 @@ F:	include/linux/iio/
 F:	tools/iio/
 
 IIO UNIT CONVERTER
-M:	Peter Rosin <peda@axentia.se>
+M:	Peter Rosin <peda@lysator.liu.se>
 L:	linux-iio@vger.kernel.org
 S:	Maintained
 F:	Documentation/devicetree/bindings/iio/afe/current-sense-amplifier.yaml
@@ -14078,6 +14087,7 @@ KERNEL VIRTUAL MACHINE FOR ARM64 (KVM/arm64)
 M:	Marc Zyngier <maz@kernel.org>
 M:	Oliver Upton <oupton@kernel.org>
 R:	Joey Gouly <joey.gouly@arm.com>
+R:	Steffen Eiden <seiden@linux.ibm.com>
 R:	Suzuki K Poulose <suzuki.poulose@arm.com>
 R:	Zenghui Yu <yuzenghui@huawei.com>
 L:	linux-arm-kernel@lists.infradead.org (moderated for non-subscribers)
@@ -15744,7 +15754,7 @@ F:	Documentation/devicetree/bindings/media/i2c/maxim,max96717.yaml
 F:	drivers/media/i2c/max96717.c
 
 MAX9860 MONO AUDIO VOICE CODEC DRIVER
-M:	Peter Rosin <peda@axentia.se>
+M:	Peter Rosin <peda@lysator.liu.se>
 L:	linux-sound@vger.kernel.org
 S:	Maintained
 F:	Documentation/devicetree/bindings/sound/max9860.txt
@@ -15959,7 +15969,7 @@ F:	Documentation/devicetree/bindings/net/can/microchip,mcp251xfd.yaml
 F:	drivers/net/can/spi/mcp251xfd/
 
 MCP4018 AND MCP4531 MICROCHIP DIGITAL POTENTIOMETER DRIVERS
-M:	Peter Rosin <peda@axentia.se>
+M:	Peter Rosin <peda@lysator.liu.se>
 L:	linux-iio@vger.kernel.org
 S:	Maintained
 F:	Documentation/ABI/testing/sysfs-bus-iio-potentiometer-mcp4531
@@ -18263,7 +18273,7 @@ F:	include/linux/mmc/
 F:	include/uapi/linux/mmc/
 
 MULTIPLEXER SUBSYSTEM
-M:	Peter Rosin <peda@axentia.se>
+M:	Peter Rosin <peda@lysator.liu.se>
 S:	Odd Fixes
 F:	Documentation/ABI/testing/sysfs-class-mux*
 F:	Documentation/devicetree/bindings/mux/
@@ -19372,7 +19382,7 @@ F:	include/dt-bindings/display/tda998x.h
 K:	"nxp,tda998x"
 
 NXP TFA9879 DRIVER
-M:	Peter Rosin <peda@axentia.se>
+M:	Peter Rosin <peda@lysator.liu.se>
 L:	linux-sound@vger.kernel.org
 S:	Maintained
 F:	Documentation/devicetree/bindings/sound/trivial-codec.yaml
@@ -20373,13 +20383,14 @@ F:	Documentation/devicetree/bindings/pci/marvell,armada8k-pcie.yaml
 F:	drivers/pci/controller/dwc/pcie-armada8k.c
 
 PCI DRIVER FOR CADENCE PCIE IP
+R:	Aksh Garg <a-garg7@ti.com>
 L:	linux-pci@vger.kernel.org
 S:	Orphan
 F:	Documentation/devicetree/bindings/pci/cdns,*
-F:	drivers/pci/controller/cadence/*cadence*
+F:	drivers/pci/controller/cadence/
 
 PCI DRIVER FOR CIX Sky1
-M:	Hans Zhang <hans.zhang@cixtech.com>
+M:	Hans Zhang <18255117159@163.com>
 L:	linux-pci@vger.kernel.org
 S:	Maintained
 F:	Documentation/devicetree/bindings/pci/cix,sky1-pcie-*.yaml
@@ -20491,7 +20502,7 @@ F:	drivers/pci/controller/plda/pcie-plda-host.c
 F:	drivers/pci/controller/plda/pcie-plda.h
 
 PCI DRIVER FOR RENESAS R-CAR
-M:	Marek Vasut <marek.vasut+renesas@gmail.com>
+M:	Marek Vasut <marek.vasut+renesas@mailbox.org>
 M:	Yoshihiro Shimoda <yoshihiro.shimoda.uh@renesas.com>
 L:	linux-pci@vger.kernel.org
 L:	linux-renesas-soc@vger.kernel.org
@@ -22965,7 +22976,7 @@ N:	riscv
 K:	riscv
 
 RISC-V IOMMU
-M:	Tomasz Jeznach <tjeznach@rivosinc.com>
+M:	Tomasz Jeznach <tomasz.jeznach@linux.dev>
 L:	iommu@lists.linux.dev
 L:	linux-riscv@lists.infradead.org
 S:	Maintained
@@ -24675,6 +24686,7 @@ S:	Maintained
 F:	fs/smb/client/smbdirect.*
 F:	fs/smb/smbdirect/
 F:	fs/smb/server/transport_rdma.*
+F:	include/linux/smbdirect.h
 
 SMC91x ETHERNET DRIVER
 M:	Nicolas Pitre <nico@fluxnic.net>
