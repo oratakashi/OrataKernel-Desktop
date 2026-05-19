@@ -849,11 +849,11 @@ struct task_struct {
 	int				on_cpu;
 
 	struct __call_single_node	wake_entry;
-#ifndef CONFIG_SCHED_ALT
 	unsigned int			wakee_flips;
 	unsigned long			wakee_flip_decay_ts;
 	struct task_struct		*last_wakee;
 
+#ifndef CONFIG_SCHED_ALT
 	/*
 	 * recent_used_cpu is initially set as the last CPU used by a task
 	 * that wakes affine another task. Waker/wakee relationships can
@@ -1024,6 +1024,9 @@ struct task_struct {
 #ifdef CONFIG_RT_MUTEXES
 	unsigned			sched_rt_mutex:1;
 #endif
+
+	/* Save user-dumpable when mm goes away */
+	unsigned			user_dumpable:1;
 
 	/* Bit to tell TOMOYO we're in execve(): */
 	unsigned			in_execve:1;
@@ -1615,6 +1618,10 @@ struct task_struct {
 #endif
 #ifdef CONFIG_KSTACK_ERASE_METRICS
 	unsigned long			prev_lowest_stack;
+#endif
+
+#ifdef CONFIG_RANDOMIZE_KSTACK_OFFSET
+	u32				kstack_offset;
 #endif
 
 #ifdef CONFIG_X86_MCE

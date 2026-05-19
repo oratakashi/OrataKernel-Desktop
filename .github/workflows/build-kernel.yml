@@ -53,22 +53,39 @@ jobs:
             exit 1
           fi
 
+          EV=$(grep -E '^EXTRAVERSION\s*=' Makefile | head -1 | sed 's/^EXTRAVERSION[[:space:]]*=[[:space:]]*//')
+
           echo "version=${VER}"   >> "$GITHUB_OUTPUT"
           echo "patchlevel=${PATCH}" >> "$GITHUB_OUTPUT"
           echo "sublevel=${SUB}"  >> "$GITHUB_OUTPUT"
           echo "base_ver=${VER}.${PATCH}.${SUB}" >> "$GITHUB_OUTPUT"
+          echo "extraversion=${EV}" >> "$GITHUB_OUTPUT"
 
           echo "✅ Makefile version: ${VER}.${PATCH}.${SUB}"
+          echo "✅ Makefile EXTRAVERSION: ${EV}"
 
       # ─── Auto-increment versioning ─────────────────────────────────
-      # Format: {VERSION}.{PATCHLEVEL}.{SUBLEVEL}-rc1-OrataKernel-1.0.{N}-zen
-      # Increment N is derived from the highest existing tag in the repo.
+      # Format is read from EXTRAVERSION in the Makefile; only the 1.0.{N}
+      # increment number is replaced. The prefix and suffix are preserved as-is.
       - name: Determine next increment
         id: version
         run: |
           BASE="${{ steps.makefile_ver.outputs.base_ver }}"
-          PREFIX="${BASE}-rc1-OrataKernel-1.0."
-          SUFFIX="-zen"
+          CURRENT_EV="${{ steps.makefile_ver.outputs.extraversion }}"
+
+          # Parse the current EXTRAVERSION to extract the prefix and suffix
+          # that surround the 1.0.{N} increment number.
+          # Example: -rc1-OrataKernel-1.0.4-zen → EV_PREFIX=-rc1-OrataKernel-1.0.  EV_SUFFIX=-zen
+          if [[ "${CURRENT_EV}" =~ ^(.*1\.0\.)([0-9]+)(.*)$ ]]; then
+            EV_PREFIX="${BASH_REMATCH[1]}"
+            EV_SUFFIX="${BASH_REMATCH[3]}"
+          else
+            echo "❌ Cannot parse 1.0.{N} pattern from EXTRAVERSION: '${CURRENT_EV}'"
+            exit 1
+          fi
+
+          PREFIX="${BASE}${EV_PREFIX}"
+          SUFFIX="${EV_SUFFIX}"
 
           git fetch --tags
 
@@ -84,7 +101,7 @@ jobs:
 
           # Version components
           TAG="${PREFIX}${N}${SUFFIX}"
-          EXTRAVERSION="-rc1-OrataKernel-1.0.${N}-zen"
+          EXTRAVERSION="${EV_PREFIX}${N}${EV_SUFFIX}"
 
           # KERNEL_RELEASE = the version string reported by `uname -r`.
           # Linux appends "+" when there are uncommitted changes at build time,
@@ -260,8 +277,12 @@ jobs:
           fi
 
       # ─── Generate install.sh ────────────────────────────────────────
-      # Mimics the UX of `sudo make install` from a vanilla kernel tree.
-      # The script auto-detects systemd-boot and GRUB.
+      # Mimics the three-command install flow used on Fedora/RHEL:
+      #   sudo make modules_install
+      #   sudo make install
+      #   sudo grub2-mkconfig -o /boot/grub2/grub.cfg
+      # Bootloader detection uses `bootctl is-installed` for systemd-boot,
+      # then prefers grub2-mkconfig (Fedora/RHEL) before grub-mkconfig (Debian/Ubuntu).
       - name: Generate install.sh
         run: |
           KR="${KERNEL_RELEASE_ACTUAL}"
@@ -275,15 +296,16 @@ jobs:
           # Version : ${TAG}
           #
           # Usage   : sudo bash install.sh
-          #           (or: sudo make install — when run from the same
-          #            directory as the kernel Makefile)
           #
-          # Behavior:
+          # Behavior (mirrors Fedora three-command install flow):
           #   1. Back up the active kernel to /boot/orata-backup-{timestamp}/
-          #   2. Install vmlinuz, vmlinux, System.map, config, initramfs
-          #   3. Install kernel modules to /lib/modules/
+          #   2. Install vmlinuz, vmlinux, System.map, config, initramfs to /boot/
+          #   3. Install kernel modules to /lib/modules/   (= make modules_install)
           #   4. Run depmod -a
-          #   5. Update the bootloader (systemd-boot or GRUB) automatically
+          #   5. Update the bootloader:
+          #        - systemd-boot  → create BLS entry  (bootctl is-installed)
+          #        - GRUB2 Fedora  → grub2-mkconfig -o /boot/grub2/grub.cfg
+          #        - GRUB  Debian  → grub-mkconfig  -o /boot/grub/grub.cfg
           # ============================================================
           set -euo pipefail
 
@@ -358,11 +380,13 @@ jobs:
           # ── Update bootloader ────────────────────────────────────────
           echo "🔄 Detecting and updating bootloader ..."
 
-          ROOT_UUID=\$(findmnt -n -o UUID / 2>/dev/null || blkid -s UUID -o value \$(df / --output=source | tail -1))
-
-          if [[ -d /boot/loader/entries ]] || [[ -d /boot/efi/EFI/systemd ]]; then
+          # Detect systemd-boot via bootctl, NOT by /boot/loader/entries presence.
+          # On Fedora/RHEL, /boot/loader/entries exists for BLS with GRUB2 — not
+          # systemd-boot — so a directory check alone gives a false positive.
+          if bootctl is-installed 2>/dev/null; then
             # ── systemd-boot ──────────────────────────────────────────
             echo "   → Detected: systemd-boot"
+            ROOT_UUID=\$(findmnt -n -o UUID / 2>/dev/null || blkid -s UUID -o value \$(df / --output=source | tail -1))
             ENTRY_DIR="/boot/loader/entries"
             mkdir -p "\${ENTRY_DIR}"
 
@@ -375,31 +399,49 @@ jobs:
           EOF
             echo "   ✅ systemd-boot entry: \${ENTRY_FILE}"
 
-          elif command -v grub-mkconfig &>/dev/null || command -v grub2-mkconfig &>/dev/null; then
-            # ── GRUB ─────────────────────────────────────────────────
-            echo "   → Detected: GRUB"
+          elif command -v grub2-mkconfig &>/dev/null; then
+            # ── GRUB2 (Fedora / RHEL / CentOS / Rocky / AlmaLinux) ───
+            echo "   → Detected: grub2-mkconfig"
+            # On Fedora BIOS:  /boot/grub2/grub.cfg
+            # On Fedora UEFI:  /boot/efi/EFI/fedora/grub.cfg
+            # Try /boot/grub2/grub.cfg first — Fedora uses this on both BIOS
+            # and UEFI (the EFI copy is sourced from there via a search command).
+            if [[ -f /boot/grub2/grub.cfg ]]; then
+              GRUB_CFG="/boot/grub2/grub.cfg"
+            else
+              GRUB_CFG=""
+              for path in \
+                /boot/efi/EFI/fedora/grub.cfg \
+                /boot/efi/EFI/centos/grub.cfg \
+                /boot/efi/EFI/rhel/grub.cfg \
+                /boot/efi/EFI/rocky/grub.cfg \
+                /boot/efi/EFI/almalinux/grub.cfg; do
+                [[ -f "\$path" ]] && GRUB_CFG="\$path" && break
+              done
+              # Default fallback — grub2-mkconfig will create the file
+              [[ -z "\${GRUB_CFG}" ]] && GRUB_CFG="/boot/grub2/grub.cfg"
+            fi
+            grub2-mkconfig -o "\${GRUB_CFG}"
+            echo "   ✅ GRUB2 config updated: \${GRUB_CFG}"
+
+          elif command -v grub-mkconfig &>/dev/null; then
+            # ── GRUB (Debian / Ubuntu / Arch) ─────────────────────────
+            echo "   → Detected: grub-mkconfig"
             GRUB_CFG=""
             for path in \
               /boot/grub/grub.cfg \
-              /boot/grub2/grub.cfg \
-              /boot/efi/EFI/fedora/grub.cfg \
               /boot/efi/EFI/ubuntu/grub.cfg; do
               [[ -f "\$path" ]] && GRUB_CFG="\$path" && break
             done
+            [[ -z "\${GRUB_CFG}" ]] && GRUB_CFG="/boot/grub/grub.cfg"
+            grub-mkconfig -o "\${GRUB_CFG}"
+            echo "   ✅ GRUB config updated: \${GRUB_CFG}"
 
-            if [[ -n "\${GRUB_CFG}" ]]; then
-              GRUB_CMD=\$(command -v grub2-mkconfig || command -v grub-mkconfig)
-              "\${GRUB_CMD}" -o "\${GRUB_CFG}"
-              echo "   ✅ GRUB config updated: \${GRUB_CFG}"
-            else
-              echo "   ⚠️  GRUB config not found. Manual update required."
-            fi
           else
             echo "   ⚠️  Bootloader not detected automatically."
             echo "      Add a boot entry manually:"
             echo "      kernel:    \${BOOT_DIR}/vmlinuz-\${KR}"
             echo "      initramfs: \${BOOT_DIR}/initramfs-\${KR}.img"
-            echo "      root UUID: \${ROOT_UUID}"
           fi
 
           echo ""

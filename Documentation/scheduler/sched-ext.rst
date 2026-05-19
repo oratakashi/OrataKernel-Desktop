@@ -445,11 +445,11 @@ of a task managed by a sched_ext scheduler:
 
             ops.running();      /* Task starts running on its assigned CPU */
 
-            while (task_is_runnable(task) && task->scx.slice > 0) {
-                ops.tick();     /* Called every 1/HZ seconds */
+            while task_is_runnable(p) {
+                while (task->scx.slice > 0 && task_is_runnable(p))
+                    ops.tick();     /* Called every 1/HZ seconds */
 
-                if (task->scx.slice == 0)
-                    ops.dispatch(); /* task->scx.slice can be refilled */
+                ops.dispatch();     /* task->scx.slice can be refilled */
             }
 
             ops.stopping();     /* Task stops running (time slice expires or wait) */
