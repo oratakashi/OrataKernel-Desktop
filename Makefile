@@ -2,7 +2,7 @@
 VERSION = 7
 PATCHLEVEL = 1
 SUBLEVEL = 0
-EXTRAVERSION = -rc3-OrataKernel-1.0.0-zen
+EXTRAVERSION = -rc6
 NAME = Baby Opossum Posse
 
 # *DOCUMENTATION*

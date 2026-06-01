@@ -29,12 +29,9 @@ enum efi_secureboot_mode efi_get_secureboot(void)
 {
 	u32 attr;
 	unsigned long size;
-	static enum efi_secureboot_mode mode;
+	enum efi_secureboot_mode mode;
 	efi_status_t status;
 	u8 moksbstate;
-
-	if (mode != efi_secureboot_mode_unset)
-		return mode;
 
 	mode = efi_get_secureboot_mode(get_var);
 	if (mode == efi_secureboot_mode_unknown) {
@@ -56,13 +53,10 @@ enum efi_secureboot_mode efi_get_secureboot(void)
 	/* If it fails, we don't care why. Default to secure */
 	if (status != EFI_SUCCESS)
 		goto secure_boot_enabled;
-	if (!(attr & EFI_VARIABLE_NON_VOLATILE) && moksbstate == 1) {
-		mode = efi_secureboot_mode_disabled;
-		return mode;
-	}
+	if (!(attr & EFI_VARIABLE_NON_VOLATILE) && moksbstate == 1)
+		return efi_secureboot_mode_disabled;
 
 secure_boot_enabled:
 	efi_info("UEFI Secure Boot is enabled.\n");
-	mode = efi_secureboot_mode_enabled;
-	return mode;
+	return efi_secureboot_mode_enabled;
 }
