@@ -190,12 +190,6 @@ void amdgpu_userq_start_hang_detect_work(struct amdgpu_usermode_queue *queue)
 			   msecs_to_jiffies(timeout_ms));
 }
 
-static void amdgpu_userq_init_hang_detect_work(struct amdgpu_usermode_queue *queue)
-{
-	INIT_DELAYED_WORK(&queue->hang_detect_work, amdgpu_userq_hang_detect_work);
-	queue->hang_detect_fence = NULL;
-}
-
 void amdgpu_userq_process_fence_irq(struct amdgpu_device *adev, u32 doorbell)
 {
 	struct xarray *xa = &adev->userq_doorbell_xa;
@@ -525,12 +519,6 @@ amdgpu_userq_destroy(struct amdgpu_userq_mgr *uq_mgr, struct amdgpu_usermode_que
 	debugfs_remove_recursive(queue->debugfs_queue);
 #endif
 	r = amdgpu_userq_unmap_helper(queue);
-	/*TODO: It requires a reset for userq hw unmap error*/
-	if (r) {
-		drm_warn(adev_to_drm(uq_mgr->adev), "trying to destroy a HW mapping userq\n");
-		queue->state = AMDGPU_USERQ_STATE_HUNG;
-	}
-
 	atomic_dec(&uq_mgr->userq_count[queue->queue_type]);
 	amdgpu_userq_cleanup(queue);
 	mutex_unlock(&uq_mgr->userq_mutex);
@@ -1066,7 +1054,7 @@ retry_lock:
 			bo = range->bo;
 			ret = amdgpu_ttm_tt_get_user_pages(bo, range);
 			if (ret)
-				goto unlock_all;
+				goto free_ranges;
 		}
 
 		invalidated = true;
@@ -1093,6 +1081,7 @@ retry_lock:
 
 unlock_all:
 	drm_exec_fini(&exec);
+free_ranges:
 	xa_for_each(&xa, tmp_key, range) {
 		if (!range)
 			continue;

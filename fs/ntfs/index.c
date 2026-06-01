@@ -2002,8 +2002,8 @@ struct index_entry *ntfs_index_walk_down(struct index_entry *ie, struct ntfs_ind
 			ictx->entry = ntfs_ie_get_first(&ictx->ib->index);
 			entry = ictx->entry;
 		} else
-			entry = NULL;
-	} while (entry && (entry->flags & INDEX_ENTRY_NODE));
+			entry = ERR_PTR(-EIO);
+	} while (!IS_ERR(entry) && (entry->flags & INDEX_ENTRY_NODE));
 
 	return entry;
 }
@@ -2108,10 +2108,15 @@ struct index_entry *ntfs_index_next(struct index_entry *ie, struct ntfs_index_co
 
 		/* walk down if it has a subnode */
 		if (flags & INDEX_ENTRY_NODE) {
-			if (!ictx->ia_ni)
+			if (!ictx->ia_ni) {
 				ictx->ia_ni = ntfs_ia_open(ictx, ictx->idx_ni);
+				if (!ictx->ia_ni)
+					return ERR_PTR(-EIO);
+			}
 
 			next = ntfs_index_walk_down(next, ictx);
+			if (IS_ERR(next))
+				return next;
 		} else {
 
 			/* walk up it has no subnode, nor data */

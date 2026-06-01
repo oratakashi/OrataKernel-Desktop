@@ -789,24 +789,6 @@ Kernel parameters
 	cio_ignore=	[S390]
 			See Documentation/arch/s390/common_io.rst for details.
 
-	clearcpuid=X[,X...] [X86]
-			Disable CPUID feature X for the kernel. See
-			arch/x86/include/asm/cpufeatures.h for the valid bit
-			numbers X. Note the Linux-specific bits are not necessarily
-			stable over kernel options, but the vendor-specific
-			ones should be.
-			X can also be a string as appearing in the flags: line
-			in /proc/cpuinfo which does not have the above
-			instability issue. However, not all features have names
-			in /proc/cpuinfo.
-			Note that using this option will taint your kernel.
-			Also note that user programs calling CPUID directly
-			or using the feature without checking anything
-			will still see it. This just prevents it from
-			being used by the kernel or shown in /proc/cpuinfo.
-			Also note the kernel might malfunction if you disable
-			some critical bits.
-
 	clk_ignore_unused
 			[CLK]
 			Prevents the clock framework from automatically gating
@@ -2513,9 +2495,6 @@ Kernel parameters
 			disable
 			  Do not enable intel_pstate as the default
 			  scaling driver for the supported processors
-			enable
-			  Enable intel_pstate in-case "disable" was passed
-			  previously in the kernel boot parameters
                         active
                           Use intel_pstate driver to bypass the scaling
                           governors layer of cpufreq and provides it own
@@ -5099,15 +5078,6 @@ Kernel parameters
 		nomsi		[MSI] If the PCI_MSI kernel config parameter is
 				enabled, this kernel boot option can be used to
 				disable the use of MSI interrupts system-wide.
-		pcie_acs_override =
-					[PCIE] Override missing PCIe ACS support for:
-				downstream
-					All downstream ports - full ACS capabilities
-				multfunction
-					All multifunction devices - multifunction ACS subset
-				id:nnnn:nnnn
-					Specfic device - full ACS capabilities
-					Specified as vid:did (vendor/device ID) in hex
 		noioapicquirk	[APIC] Disable all boot interrupt quirks.
 				Safety option to keep boot IRQs enabled. This
 				should never be necessary.
