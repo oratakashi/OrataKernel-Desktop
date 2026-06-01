@@ -1,6 +1,6 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Linux/x86 7.1.0-rc4-OrataKernel-1.0.0-zen Kernel Configuration
+# Linux/x86 7.1.0-rc4-OrataKernel-1.0.1-zen Kernel Configuration
 #
 CONFIG_CC_VERSION_TEXT="gcc (GCC) 16.1.1 20260501 (Red Hat 16.1.1-1)"
 CONFIG_CC_IS_GCC=y
